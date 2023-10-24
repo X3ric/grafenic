@@ -1,0 +1,225 @@
+#ifndef WINDOW_H
+#define WINDOW_H
+
+    int SCREEN_WIDTH;
+    int SCREEN_HEIGHT;
+    int WIDTH;
+    int HEIGHT;
+
+    #include "utils.h"
+
+    GLubyte* framebuffer;
+    GLuint framebufferTexture;
+
+    double frametime;
+    int fpslimit;
+    double fps;
+
+    #include "draw/main.h"
+
+    bool cursor = true;
+    bool oldcursor = true;
+
+    bool vsync = false;
+    bool oldvsync = false;
+
+    bool fullscreen = false;
+    bool oldfullscreen = false;
+
+    bool visible = true;
+    bool oldvisible = true;
+
+    bool floating = true;
+    bool transparent = false;
+    bool decorated = true;
+
+    const int MIN_PIXEL = 1;
+
+    void window_buffersize_callback(GLFWwindow* window, int width, int height)
+    {
+        SCREEN_WIDTH = width < MIN_PIXEL ? MIN_PIXEL : width;
+        SCREEN_HEIGHT = height < MIN_PIXEL ? MIN_PIXEL : height;
+        //glfwSetWindowAspectRatio(window, SCREEN_WIDTH, SCREEN_HEIGHT);
+        glViewport(0, 0, (GLsizei)SCREEN_WIDTH, (GLsizei)SCREEN_HEIGHT);
+    }
+
+    void window_refresh_callback(GLFWwindow* window)
+    {
+        if (framebuffer) {free(framebuffer);}
+        framebuffer = (GLubyte*)calloc(SCREEN_WIDTH * SCREEN_HEIGHT, 4 * sizeof(GLubyte));
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        Update();
+        DrawPixels(0,0,SCREEN_WIDTH,SCREEN_HEIGHT);
+        glfwSwapBuffers(window);
+        //glfwPollEvents();
+    }
+
+    int WindowInit(int width, int height, const char* title)
+    {
+        WIDTH = width;
+        HEIGHT = height;
+        SCREEN_WIDTH = width;
+        SCREEN_HEIGHT = height;
+        glfwSetErrorCallback(ErrorCallback);
+        if (!glfwInit()) {
+            printf("Failed to initialize GLFW\n");
+            return -1;
+        }
+        //glfwWindowHint(GLFW_SAMPLES, 4); // 4x antialiasing
+        glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+        if (transparent) {
+            glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GL_TRUE); 
+        }
+        if (!decorated) {
+            glfwWindowHint(GLFW_DECORATED, GL_FALSE); 
+        }
+        if (floating) {
+            glfwWindowHint(GLFW_RESIZABLE , GLFW_FALSE);
+        } else {
+            glfwWindowHint(GLFW_RESIZABLE , GLFW_TRUE);
+        }
+        glfwWindowHint(GLFW_REFRESH_RATE, 0);
+        // Set color buffer bit sizes
+            //glfwWindowHint(GLFW_RED_BITS, 1);
+            //glfwWindowHint(GLFW_GREEN_BITS, 1);
+            //glfwWindowHint(GLFW_BLUE_BITS, 1);
+            //glfwWindowHint(GLFW_ALPHA_BITS, 1);
+        // Set depth and stencil buffer bit sizes
+            //glfwWindowHint(GLFW_DEPTH_BITS, 12);
+            //glfwWindowHint(GLFW_STENCIL_BITS, 0);
+        //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);//forced old opengl version
+        //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+        //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);//forced new opengl version
+        //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+        //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, title, NULL, NULL);
+        if (!window) {
+            printf("Failed to open GLFW window.\n");
+            glfwTerminate();
+            return -1;
+        }
+        glfwMakeContextCurrent(window);
+        glfwSetKeyCallback(window, KeyCallback);
+        glfwSetScrollCallback(window, ScrollCallback);
+        glfwSetFramebufferSizeCallback(window, window_buffersize_callback);
+        glfwSetWindowRefreshCallback(window, window_refresh_callback);
+        printf("Renderer: %s\n", glGetString(GL_RENDERER));
+	    printf("OpenGL version supported %s\n", glGetString(GL_VERSION));
+        //glewExperimental=true;
+        GLenum err = glewInit();
+        if (err != GLEW_OK) {
+            fprintf(stderr, "Error initializing GLEW: %s\n", glewGetErrorString(err));
+        }
+        if (vsync) {
+            glfwSwapInterval(1);
+        } else {
+            glfwSwapInterval(0);
+        }
+        glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+        //glEnable(GL_DEPTH_TEST);//depth
+        //glDepthFunc(GL_LEQUAL);
+        //glDisable(GL_CULL_FACE);
+        //glCullFace(GL_BACK);
+        InitializeOpenGL();
+        glfwGetFramebufferSize(window, &width, &height);
+        window_buffersize_callback(window, width, height);
+
+        print("Loaded\n");
+        return 0;
+    }
+
+    int WindowState() {
+        return glfwWindowShouldClose(window);
+    }
+
+    void WindowStateSet(bool state) {
+        if (state) {
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+        } else  {
+            glfwSetWindowShouldClose(window, GLFW_FALSE);            
+        }
+    }
+
+    void WindowFrames(){
+        static double previousframetime = 0.0;
+        double targetTime = 1.0 / fpslimit;
+        frametime = glfwGetTime();
+        double elapsedTime = frametime - previousframetime;
+        if (fpslimit != 0) {
+            while (elapsedTime < targetTime) {
+                frametime = glfwGetTime();
+                elapsedTime = frametime - previousframetime;
+            }
+        }
+        if (elapsedTime != 0) {
+            fps = 1.0 / elapsedTime;
+        } else {
+            fps = 0.0;
+        }
+        previousframetime = frametime;
+    }
+
+    void WindowClear() {
+        if (framebuffer) {
+            free(framebuffer);  // Free the existing framebuffer, if it exists.
+        }
+        framebuffer = (GLubyte*)calloc(SCREEN_WIDTH * SCREEN_HEIGHT, 4 * sizeof(GLubyte));
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        WindowFrames();
+    }
+    
+    void WindowProcess() {
+        if (fullscreen != oldfullscreen) {
+            if (fullscreen) {
+                glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, SCREEN_WIDTH, SCREEN_WIDTH, 0);
+            } else {
+                glfwSetWindowMonitor(window, NULL, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+            }
+            oldfullscreen = fullscreen;
+        }
+        if (cursor != oldcursor) {
+            if (cursor) {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            } else {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+            }
+            oldcursor = cursor;
+        }
+        if (vsync != oldvsync) {
+            if (vsync) {
+                glfwSwapInterval(1);
+            } else {
+                glfwSwapInterval(0);
+            }
+            oldvsync = vsync;
+        } 
+        if (visible != oldvisible) {
+            if (visible) {
+                glfwShowWindow(window);
+            } else {
+                glfwHideWindow(window);
+            }
+            oldvisible = visible;
+        } 
+    
+        DrawPixels(0,0,SCREEN_WIDTH,SCREEN_HEIGHT);
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    void WindowClose()
+    {
+        glfwSetKeyCallback(window, NULL);
+        print("Exit\n");
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &EBO);
+        glDeleteProgram(shaderProgram);
+        stbi_image_free(img.data);
+        free(framebuffer);
+        framebuffer = NULL;
+        glfwDestroyWindow(window);
+        glfwTerminate();
+    }
+
+#endif // WINDOW_H
