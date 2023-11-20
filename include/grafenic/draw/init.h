@@ -1,29 +1,18 @@
-#ifndef DRAW_H
-#define DRAW_H
+#ifndef INITDRAW_H
+#define INITDRAW_H
 
-    #include "color.h"
-    #include "shader.h"
-    #include "camera.h"
+    #include <grafenic/draw/color.h>
+    #include <grafenic/draw/shader.h>
+    #include <grafenic/draw/camera.h>
 
     // Primitives
 
-        void DrawPixels(float x, float y, float width, float height) { //opengl 3.1
+        void DrawPixels(float x, float y, float width, float height) { 
             glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);//alpha blending
-            glPushMatrix();
-            OrthoCam(0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, -1, 1);
             glBindTexture(GL_TEXTURE_2D, framebufferTexture);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, framebuffer);
-            glBegin(GL_QUADS);
-                glTexCoord2f(0.0f, 1.0f); glVertex2f(x, y);                  
-                glTexCoord2f(1.0f, 1.0f); glVertex2f(x + width, y);          
-                glTexCoord2f(1.0f, 0.0f); glVertex2f(x + width, y + height);
-                glTexCoord2f(0.0f, 0.0f); glVertex2f(x, y + height);
-            glEnd();
-            //glEnableClientState(GL_VERTEX_ARRAY);
-            //glEnableClientState(GL_TEXTURE_COORD_ARRAY);  
-            glEnable(GL_TEXTURE_2D);
+            CreateTextureWithPBO(framebuffer,framebufferTexture);
+            ScreenOrthoCam(x, y, width, height,0,shaderdefault);
             glBindTexture(GL_TEXTURE_2D, 0);
-            glPopMatrix();
             glDisable(GL_BLEND);
         }
 
@@ -33,13 +22,25 @@
             }
             if (color.a == 0) { color.a = 255; }
             int index = (y * SCREEN_WIDTH + x) * 4;
-            float srcAlpha = color.a / 255.0f;
-            float dstAlpha = framebuffer[index + 3] / 255.0f;
-            float outAlpha = srcAlpha + dstAlpha * (1 - srcAlpha); // Resulting alpha
-            framebuffer[index]     = (GLubyte)((color.r * srcAlpha + framebuffer[index] * dstAlpha * (1 - srcAlpha)) / outAlpha);
-            framebuffer[index + 1] = (GLubyte)((color.g * srcAlpha + framebuffer[index + 1] * dstAlpha * (1 - srcAlpha)) / outAlpha);
-            framebuffer[index + 2] = (GLubyte)((color.b * srcAlpha + framebuffer[index + 2] * dstAlpha * (1 - srcAlpha)) / outAlpha);
-            framebuffer[index + 3] = (GLubyte)(outAlpha * 255); // Store the resulting alpha
+            float alpha = color.a / 255.0f;
+            float invAlpha = 1.0f - alpha;
+            pixels = true;
+            if(framebuffer){
+                framebuffer[index]     = (GLubyte)(color.r * alpha + framebuffer[index]     * invAlpha);
+                framebuffer[index + 1] = (GLubyte)(color.g * alpha + framebuffer[index + 1] * invAlpha);
+                framebuffer[index + 2] = (GLubyte)(color.b * alpha + framebuffer[index + 2] * invAlpha);
+                framebuffer[index + 3] = color.a;
+            }
+        }
+
+        Color GetPixel(int x, int y) {
+            if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) {
+                return (Color){0, 0, 0, 255};
+            }
+            GLubyte pixelData[4];
+            glReadPixels(x, SCREEN_HEIGHT - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixelData);
+            Color color = {pixelData[0], pixelData[1], pixelData[2], pixelData[3]};
+            return color;
         }
 
         bool IsInside(int x, int y,int rectX, int rectY, int rectWidth, int rectHeight) {
@@ -150,7 +151,7 @@
             DrawLine(x2, y2, x3, y3, thickness, color);
         }
 
-        #include "text.h"
         #include "image.h"
+        #include "text.h"   
 
-#endif // DRAW_H
+#endif // INITDRAW_H

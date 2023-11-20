@@ -1,10 +1,10 @@
 #ifndef INPUT_H
 #define INPUT_H
-    
+
     #include <stdio.h>
     #include <stdlib.h>
-    #include <stdbool.h>
     #include <string.h>
+    #include <ctype.h>
     
     GLFWwindow* window;
 
@@ -111,26 +111,6 @@
             if (strcmp(character, "RightAlt") == 0) return GLFW_KEY_RIGHT_ALT;
             if (strcmp(character, "LeftSuper") == 0) return GLFW_KEY_LEFT_SUPER;
             if (strcmp(character, "RightSuper") == 0) return GLFW_KEY_RIGHT_SUPER;
-        // Gamepad keys  "WorkInProgress"
-            if (strcmp(character, "GamepadA") == 0) return GLFW_GAMEPAD_BUTTON_A;
-            if (strcmp(character, "GamepadB") == 0) return GLFW_GAMEPAD_BUTTON_B;
-            if (strcmp(character, "GamepadX") == 0) return GLFW_GAMEPAD_BUTTON_X;
-            if (strcmp(character, "GamepadY") == 0) return GLFW_GAMEPAD_BUTTON_Y;
-            if (strcmp(character, "GamepadLeftBumper") == 0) return GLFW_GAMEPAD_BUTTON_LEFT_BUMPER;
-            if (strcmp(character, "GamepadRightBumper") == 0) return GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER;
-            if (strcmp(character, "GamepadBack") == 0) return GLFW_GAMEPAD_BUTTON_BACK;
-            if (strcmp(character, "GamepadStart") == 0) return GLFW_GAMEPAD_BUTTON_START;
-            if (strcmp(character, "GamepadGuide") == 0) return GLFW_GAMEPAD_BUTTON_GUIDE;
-            if (strcmp(character, "GamepadLeftThumb") == 0) return GLFW_GAMEPAD_BUTTON_LEFT_THUMB;
-            if (strcmp(character, "GamepadRightThumb") == 0) return GLFW_GAMEPAD_BUTTON_RIGHT_THUMB;
-            if (strcmp(character, "GamepadDpadUp") == 0) return GLFW_GAMEPAD_BUTTON_DPAD_UP;
-            if (strcmp(character, "GamepadDpadRight") == 0) return GLFW_GAMEPAD_BUTTON_DPAD_RIGHT;
-            if (strcmp(character, "GamepadDpadDown") == 0) return GLFW_GAMEPAD_BUTTON_DPAD_DOWN;
-            if (strcmp(character, "GamepadDpadLeft") == 0) return GLFW_GAMEPAD_BUTTON_DPAD_LEFT;
-            if (strcmp(character, "GamepadCross") == 0) return GLFW_GAMEPAD_BUTTON_CROSS; // Alternative label for A
-            if (strcmp(character, "GamepadCircle") == 0) return GLFW_GAMEPAD_BUTTON_CIRCLE; // Alternative label for B
-            if (strcmp(character, "GamepadSquare") == 0) return GLFW_GAMEPAD_BUTTON_SQUARE; // Alternative label for X
-            if (strcmp(character, "GamepadTriangle") == 0) return GLFW_GAMEPAD_BUTTON_TRIANGLE; // Alternative label for Y
         // Menu key
             if (strcmp(character, "Menu") == 0) return GLFW_KEY_MENU;
         // If no match found
@@ -148,6 +128,30 @@
             return glfwGetKey(window, key) == GLFW_RELEASE;
         }
 
+        bool isKeyPressed(const char* character,double interval) {
+            static bool isKeyToggled = false;
+            static int lastKey = -1;
+            static double lastTime = 0;
+            int key = KeyChar(character);
+            if (key == GLFW_KEY_UNKNOWN || key > GLFW_KEY_LAST) {
+                return false;
+            }
+            double currentTime = glfwGetTime();
+            if (glfwGetKey(window, key) == GLFW_PRESS) {
+                if (key != lastKey || currentTime - lastTime > interval) {
+                    isKeyToggled = (key != lastKey) ? true : !isKeyToggled;
+                    lastKey = key;
+                    lastTime = currentTime;
+                }
+            } else {
+                if (key == lastKey) {
+                    lastKey = -1;
+                    isKeyToggled = false;
+                }
+            }
+            return isKeyToggled;
+        }
+        
         static int lastState[GLFW_KEY_LAST + 1] = {0};
         static int toggleState[GLFW_KEY_LAST + 1] = {0};
 
@@ -170,40 +174,127 @@
             }
         }
 
-        void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-        {
-            const char* actionString = "";
-            switch (action) {
-                case GLFW_PRESS:
-                    actionString = "PRESSED";
-                    break;
-                case GLFW_RELEASE:
-                    actionString = "RELEASED";
-                    break;
-                case GLFW_REPEAT:
-                    actionString = "REPEATED";
-                    break;
-                default:
-                    actionString = "UNKNOWN ACTION";
-                    break;
-            }
-            const char* modString = "";
-            if (mods == GLFW_MOD_SHIFT) {
-                modString = "SHIFT";
-            } else if (mods == GLFW_MOD_CONTROL) {
-                modString = "CONTROL";
-            } else if (mods == GLFW_MOD_ALT) {
-                modString = "ALT";
-            } else if (mods == GLFW_MOD_SUPER) {
-                modString = "SUPER";
-            } else if (mods == 0) {
-                modString = "NONE";
+        void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+            const char* actionStrings[] = {"RELEASED", "PRESSED", "REPEATED", "RELASED"};
+            const char* actionString = action >= GLFW_PRESS && action <= GLFW_REPEAT ? actionStrings[action] : actionStrings[3];
+            char modString[64] = {0};
+            if (mods == 0) {
+                strcpy(modString, "");
             } else {
-                modString = "COMBINED MODS";
+                if (mods & GLFW_MOD_SHIFT) strcat(modString, "Shift+");
+                if (mods & GLFW_MOD_CONTROL) strcat(modString, "Ctrl+");
+                if (mods & GLFW_MOD_ALT) strcat(modString, "Alt+");
+                if (mods & GLFW_MOD_SUPER) strcat(modString, "Mod+");
             }
-            printf("Key %d [%s] with scancode %d, action %s, and mods %s\n", key, glfwGetKeyName(key, scancode), scancode, actionString, modString);
+            char keyNameBuffer[64] = {0};
+            const char* keyName = glfwGetKeyName(key, scancode);
+            if (!keyName) {
+               return;
+            } else {
+                strcpy(keyNameBuffer, keyName);
+                if (mods & GLFW_MOD_SHIFT) {
+                    for (int i = 0; keyNameBuffer[i]; ++i) {
+                        keyNameBuffer[i] = toupper((unsigned char)keyNameBuffer[i]);
+                    }
+                }
+            }
+            if(debug.input){
+                printf("%s[%s] %s %d %d\n", modString, keyNameBuffer,actionString, scancode, key);
+            }
         }
 
+        char lastPressedChar = '\0';
+        void CharCallback(GLFWwindow* window, unsigned int codepoint) {
+            if (codepoint < 128) {
+                lastPressedChar = (char)codepoint;
+            }
+            //printf("%c", codepoint);
+        }
+    
+    // GAMEPAD
+
+        int GamepadButton(const char* character) {
+            if (!character) return -1;
+            if (strcmp(character, "A") == 0) return GLFW_GAMEPAD_BUTTON_A;
+            if (strcmp(character, "B") == 0) return GLFW_GAMEPAD_BUTTON_B;
+            if (strcmp(character, "X") == 0) return GLFW_GAMEPAD_BUTTON_X;
+            if (strcmp(character, "Y") == 0) return GLFW_GAMEPAD_BUTTON_Y;
+            if (strcmp(character, "LeftBumper") == 0) return GLFW_GAMEPAD_BUTTON_LEFT_BUMPER;
+            if (strcmp(character, "RightBumper") == 0) return GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER;
+            if (strcmp(character, "Back") == 0) return GLFW_GAMEPAD_BUTTON_BACK;
+            if (strcmp(character, "Start") == 0) return GLFW_GAMEPAD_BUTTON_START;
+            if (strcmp(character, "Guide") == 0) return GLFW_GAMEPAD_BUTTON_GUIDE;
+            if (strcmp(character, "LeftThumb") == 0) return GLFW_GAMEPAD_BUTTON_LEFT_THUMB;
+            if (strcmp(character, "RightThumb") == 0) return GLFW_GAMEPAD_BUTTON_RIGHT_THUMB;
+            if (strcmp(character, "DpadUp") == 0) return GLFW_GAMEPAD_BUTTON_DPAD_UP;
+            if (strcmp(character, "DpadRight") == 0) return GLFW_GAMEPAD_BUTTON_DPAD_RIGHT;
+            if (strcmp(character, "DpadDown") == 0) return GLFW_GAMEPAD_BUTTON_DPAD_DOWN;
+            if (strcmp(character, "DpadLeft") == 0) return GLFW_GAMEPAD_BUTTON_DPAD_LEFT;
+            if (strcmp(character, "Cross") == 0) return GLFW_GAMEPAD_BUTTON_CROSS; // Alternative label for A
+            if (strcmp(character, "Circle") == 0) return GLFW_GAMEPAD_BUTTON_CIRCLE; // Alternative label for B
+            if (strcmp(character, "Square") == 0) return GLFW_GAMEPAD_BUTTON_SQUARE; // Alternative label for X
+            if (strcmp(character, "Triangle") == 0) return GLFW_GAMEPAD_BUTTON_TRIANGLE; // Alternative label for Y
+            return -1; // Button not recognized
+        }
+
+        bool isGamepadConnected(int gamepadId) {
+            return glfwJoystickPresent(gamepadId) && glfwJoystickIsGamepad(gamepadId);
+        }
+
+        int isGamepadButtonDown(int gamepadId, const char* buttonName) {
+            if (!isGamepadConnected(gamepadId)) return 0;
+            GLFWgamepadstate state;
+            if (!glfwGetGamepadState(gamepadId, &state)) return 0;
+            int button = GamepadButton(buttonName);
+            return button != -1 ? state.buttons[button] == GLFW_PRESS : 0;
+        }
+
+        int isGamepadButtonUp(int gamepadId, const char* buttonName) {
+            if (!isGamepadConnected(gamepadId)) return 0;
+            GLFWgamepadstate state;
+            if (!glfwGetGamepadState(gamepadId, &state)) return 0;
+            int button = GamepadButton(buttonName);
+            return button != -1 ? state.buttons[button] == GLFW_RELEASE : 0;
+        }
+
+        int isGamepadButton(const char* character) {
+            int key = GamepadButton(character);
+            if (key == GLFW_KEY_UNKNOWN || key > GLFW_KEY_LAST) {
+                return false;
+            }
+            if (isKeyDown(character) && lastState[key] == GLFW_RELEASE) {
+                toggleState[key] = !toggleState[key];
+            }
+            lastState[key] = glfwGetKey(window, key);
+            return toggleState[key];
+        }
+
+        void isGamepadButtonReset(const char* character) {
+            int key = GamepadButton(character);
+            if (key != GLFW_KEY_UNKNOWN && key <= GLFW_KEY_LAST) {
+                toggleState[key] = 0;
+            }
+        }
+
+        int GamepadAxisValue(const char* axisName) {
+            if (!axisName) return -1;
+            if (strcmp(axisName, "LeftX") == 0) return GLFW_GAMEPAD_AXIS_LEFT_X;
+            if (strcmp(axisName, "LeftY") == 0) return GLFW_GAMEPAD_AXIS_LEFT_Y;
+            if (strcmp(axisName, "RightX") == 0) return GLFW_GAMEPAD_AXIS_RIGHT_X;
+            if (strcmp(axisName, "RightY") == 0) return GLFW_GAMEPAD_AXIS_RIGHT_Y;
+            if (strcmp(axisName, "LeftTrigger") == 0) return GLFW_GAMEPAD_AXIS_LEFT_TRIGGER;
+            if (strcmp(axisName, "RightTrigger") == 0) return GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER;
+            return -1;
+        }
+
+        float GamepadAxis(int gamepadId, const char* axisName) {
+            if (!isGamepadConnected(gamepadId)) return 0.0f;
+            GLFWgamepadstate state;
+            if (!glfwGetGamepadState(gamepadId, &state)) return 0.0f;
+            int axis = GamepadAxisValue(axisName);
+            if (axis == -1) return 0.0f;
+            return state.axes[axis];
+        }
 
     // MOUSE
 
@@ -211,9 +302,18 @@
             double x, y;
         } Mouse;
 
-        Mouse GetMousePos() {
-            Mouse mouse = {0,0};
+        Mouse lastmouse = {0, 0};
+        Mouse mouse = {0, 0};
+        bool mousemoving = false;
+
+        Mouse MouseInit() {
             glfwGetCursorPos(window, &mouse.x, &mouse.y);
+            if (mouse.x != lastmouse.x || mouse.y != lastmouse.y) {
+                lastmouse = mouse;
+                mousemoving = true;
+                return (Mouse){mouse.x, mouse.y};
+            }
+            mousemoving = false;
             return (Mouse){mouse.x, mouse.y};
         }
 
@@ -247,15 +347,15 @@
             double x, y;
         } MouseScroll;
 
-        static MouseScroll currentScroll = {0.0, 0.0};
-
-        MouseScroll GetScroll() {
-            return currentScroll;
-        }
+        static MouseScroll mousescroll = {0.0, 0.0};
 
         void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
-            currentScroll.x += xoffset;
-            currentScroll.y += yoffset;
+            mousescroll.x += xoffset;
+            mousescroll.y += yoffset;
+        }
+
+        void SetCursorPos(float x, float y) {
+            glfwSetCursorPos(window,x,y);
         }
 
 #endif // INPUT_H
