@@ -39,7 +39,8 @@
         }
         stbtt_PackSetOversampling(&packContext, 2, 2);
         stbtt_packedchar packedChars[96];
-        if (!stbtt_PackFontRange(&packContext, font.fontBuffer, 0, 24.0, 32, 96, packedChars)) {
+        font.fontSize = 24.0;//generated atlas font size
+        if (!stbtt_PackFontRange(&packContext, font.fontBuffer, 0, font.fontSize, 32, 96, packedChars)) {
             stbtt_PackEnd(&packContext);
             free(font.atlasData);
             free(font.fontBuffer);
@@ -116,7 +117,7 @@
         if (fontSize <= 1) fontSize = 1;
         if (color.a == 0) color.a = 255;
         if (!font.fontBuffer) return;
-        float scale = (fontSize / 24.0);
+        float scale = (fontSize / (font.fontSize*2.5));
         int ch_x = x;
         int baseline = SCREEN_HEIGHT - y; // This adjusts the baseline considering the screen height
         for (unsigned int i = 0; text[i] != '\0'; ++i) {
@@ -180,16 +181,14 @@
             lineWidth += roundf(advanceWidth * scale);
             stbtt_FreeBitmap(char_bitmap, NULL);
         }
-        // Create OpenGL texture
+        // Bind bitmap to OpenGL Created texture
         glBindTexture(GL_TEXTURE_2D, textTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, bitmap);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         free(bitmap);
         // Draw textured rectangle
         glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBindTexture(GL_TEXTURE_2D, textTexture);
-        ScreenOrthoCam(x, y, imageWidth, imageHeight,angleInDegrees,shaderdefault);
+        ScreenCam(x, y, imageWidth, imageHeight,angleInDegrees,shaderdefault);
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_BLEND);
     }

@@ -1,6 +1,7 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
+    const char* TITLE = "\0";
     int SCREEN_WIDTH;
     int SCREEN_HEIGHT;
     int WIDTH;
@@ -10,8 +11,6 @@
 
     GLubyte* framebuffer;
 
-    
-
     double frametime;
     int fpslimit;
     double fps;
@@ -20,12 +19,15 @@
     typedef struct {
         bool input;
         bool wiredframe;
+        bool fps;
     } Debug;
     Debug debug;
 
     #include <grafenic/input.h>
 
     #include <grafenic/utils.h>
+
+    #include <grafenic/audio.h>
 
     bool pixels = false;
 
@@ -64,7 +66,10 @@
             fps = 0.0;
         }
         previousframetime = frametime;
-        print("FPS: %.0f\n",fps);
+        if(debug.fps){
+            //ClearOutput();
+            print("FPS: %.0f\n",fps);
+        }
     }
 
     void WindowClear() {
@@ -132,6 +137,7 @@
 
     int WindowInit(int width, int height, const char* title)
     {
+        TITLE = title;
         WIDTH = width;
         HEIGHT = height;
         SCREEN_WIDTH = width;
@@ -142,6 +148,7 @@
             return -1;
         }
         //glfwWindowHint(GLFW_SAMPLES, 4); // 4x antialiasing
+        //glEnable(GL_MULTISAMPLE);
         glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
         if (transparent) {
             glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GL_TRUE); 
@@ -211,6 +218,7 @@
     {
         glfwSetKeyCallback(window, NULL);
         print("Exit\n");
+        AudioStop();
         glDeleteVertexArrays(1, &VAO);
         glDeleteBuffers(1, &VBO);
         glDeleteBuffers(2, PBO);

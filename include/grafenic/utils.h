@@ -339,4 +339,14 @@
             return attrib.st_mtime;
         }
 
+    // OpenGL utils
+
+        void glTexOpt(GLint filter,GLint warp){
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, warp);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, warp);
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        } 
+
 #endif // UTILS_H

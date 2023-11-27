@@ -92,27 +92,47 @@ void TextInfo(){ // Text info
     DrawCenteredTextColumn(font,9,texts, text("Space = bar state: %s", !isKey("Space") ? "ON" : "OFF"));
 } 
 void update(void){
-        float speed = 1.0f;
+    // Movement Camera
+        double speed;
         if (isKeyDown("LeftShift")) {
-            speed = 2.0F;
+            speed = 0.2f;
+        } else {
+            speed = 0.1f;
         }
         if (isKeyDown("w")) {
-            camera.y += speed;
+            camera.y += speed * frametime;
         }
         if (isKeyDown("s")) {
-            camera.y -= speed;
+            camera.y -= speed * frametime;
         }
         if (isKeyDown("a")) {
-            camera.x += speed;
+            camera.x += speed * frametime;
         }
         if (isKeyDown("d")) {
-            camera.x -= speed;
+            camera.x -= speed * frametime;
         }
+        if (isKeyDown("r")) {
+            camera.x = 0.0;
+            camera.y = 0.0;
+            camera.angle = 0.0;
+        }
+        if (mousescroll.y < 0) {mousescroll.y = 0;}
         camera.z = mousescroll.y;
-        //camera.angle = (sin(glfwGetTime())*50.0f);
+        if (isKeyDown("e")) {
+           camera.angle += 0.001f * frametime;
+        } else if (isKeyDown("q")) {
+           camera.angle -= 0.001f * frametime;
+        }
     // DrawImage
         DrawImageShader(img,0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,0,shaderx);
         //DrawImage(img,0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,0);
+        //debug.wiredframe = true; //debug single part
+        //TriangleGL 
+            //GLfloat x1 = 0.0f, y1 = 0.0f;
+            //GLfloat x2 = 0.0f, y2 = SCREEN_HEIGHT;
+            //GLfloat x3 = SCREEN_WIDTH,  y3 = SCREEN_HEIGHT;
+            //Triangle(shaderx,0, x1, y1, x2, y2, x3, y3);
+        //debug.wiredframe = false; //stop debugging
     // Input Example
         //      Key                    MouseButton                      Info
         // isKey,isKeyReset  // isMouseButton,isMouseButtonReset  // key Bool
@@ -181,12 +201,20 @@ void update(void){
         //Fps(0, SCREEN_HEIGHT, font, Scaling(50));
         //ExitPromt(font);
     // Experimental WorkInProgress
-        //DrawTextAtlas(0, 0, font, Scaling(15), text("FPS: %.0f", fps), WHITE);
+        //DrawTextAtlas(0, 0, font, Scaling(50), text("FPS: %.0f", fps), WHITE);
         //DrawTextRect(0,0,SCREEN_WIDTH, SCREEN_HEIGHT,font, Scaling(50), text("FPS: %.0f", fps), WHITE,0);
         
 } 
+
+// Window
+// WIDTH "started size" output
+// HEIGHT "started size" output
+// SCREEN_WIDTH "current size" output
+// SCREEN_HEIGHT "current size" output
+// TITLE "window title" input/output
+// SINK_TITLE "audio interface title" input/output
  
-int main(void)
+int main(int arglenght, char** args)
 { 
     // Built-in "!default"
       // floating = false;
@@ -197,17 +225,18 @@ int main(void)
       // decorated = false;
       // visible = false;
       // fpslimit = 60;
-      // fps = ReadOnly; 
-      // frametime = ReadOnly; 
-      // mouse = {x,y} ReadOnly; 
-      // mousescroll = {x,y} ReadOnly;
-      // mousemoving = Bool ReadOnly; 
+      // fps = output; 
+      // frametime = output; 
+      // mouse = {x,y} output; 
+      // mousescroll = {x,y} output;
+      // mousemoving = Bool output; 
       // camera.x = float;
       // camera.y = float;
       // camera.z = float;
       // camera.angle = angle in degres;
       // debug.input = true;
       // debug.wiredframe = true;
+      // debug.fps = true;
     WindowInit(1920, 1080, "Grafenic");
     shaderx = LoadShader("./res/shaders/pixel.vert","./res/shaders/custom.frag");
     //shaderx = LoadShader("./res/shaders/pixel.vert",fragmentsh);//example to load raw "not convinient" not have hotreloading
@@ -222,6 +251,14 @@ int main(void)
         //FileSave("boot", text("%d", bootCount++)); // Save updated boot count + 1 converted to str
         //print("Booted times: %d\n", bootCount); // debug on console
         ////FileClear(); // clear all data
+    // Audio inizialization
+        //AudioInit();
+        // Play a stream with audio
+            //AudioPlay("./res/sounds/sound.wav");
+        // Load a file edit and play
+            //Sound* sound = SoundLoad("./res/sounds/sound.wav");
+            //SetSoundPitchSemitones(sound,-24.0);
+            //SoundPlay(sound);//SoundStop(sound);
     while (!WindowState())
     {
         WindowClear();

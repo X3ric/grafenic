@@ -23,11 +23,8 @@
         glGenTextures(1, &img.raw);
         glBindTexture(GL_TEXTURE_2D, img.raw);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img.data);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        glTexOpt(GL_LINEAR,GL_CLAMP_TO_EDGE);
+        glBindTexture(GL_TEXTURE_2D, 0);
         stbi_image_free(img.data);
         img.data = NULL;
         return img;
@@ -36,7 +33,7 @@
     void DrawImage(Image image, float x, float y, float width, float height, GLfloat angle) {
         glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBindTexture(GL_TEXTURE_2D, image.raw);
-        ScreenOrthoCam(x, y, width, height, angle, shaderdefault);
+        ScreenCam(x, y, width, height, angle, shaderdefault);
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_BLEND);
     }
@@ -44,7 +41,7 @@
     void DrawImageShader(Image image, float x, float y, float width, float height, GLfloat angle, Shader shader) {
         glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBindTexture(GL_TEXTURE_2D, image.raw);
-        ScreenOrthoCam(x, y, width, height, angle, shader);
+        ScreenCam(x, y, width, height, angle, shader);
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_BLEND);
     }

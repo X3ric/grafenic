@@ -124,19 +124,20 @@
             // Unbind VBO and VAO
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
                 glBindVertexArray(0);
-            // Generate PBOs for asynchronous data transfer
-                glGenBuffers(2, PBO);
-            // Initialize PBOs
-                for (int i = 0; i < 2; ++i) {
-                    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PBO[i]);
-                    // Allocate memory for the PBO
-                    glBufferData(GL_PIXEL_UNPACK_BUFFER, SCREEN_WIDTH * SCREEN_HEIGHT * 4, NULL, GL_STREAM_DRAW);
-                }
-            // Unbind PBO
-                glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+                // Generate PBOs for asynchronous data transfer
+                    glGenBuffers(2, PBO);
+                // Initialize PBOs
+                    for (int i = 0; i < 2; ++i) {
+                        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PBO[i]);
+                        // Allocate memory for the PBO
+                        glBufferData(GL_PIXEL_UNPACK_BUFFER, SCREEN_WIDTH * SCREEN_HEIGHT * 4, NULL, GL_STREAM_DRAW);
+                    }
+                // Unbind PBO
+                    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
         }
 
         void CreateTextureWithPBO(unsigned char* framebuffer, GLuint framebufferTexture) {
+            if(pixels){
             glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PBO[currentPboIndex]);
             glBufferData(GL_PIXEL_UNPACK_BUFFER, SCREEN_WIDTH * SCREEN_HEIGHT * 4, NULL, GL_STREAM_DRAW);
             GLubyte* ptr = (GLubyte*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
@@ -148,28 +149,41 @@
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
             glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
             currentPboIndex = (currentPboIndex + 1) % 2;
+            }
         }
-        
+
         void InitializeOpenGL() {
             // Generate Shader default
                 shaderdefault = LoadShader("./res/shaders/pixel.vert","./res/shaders/pixel.frag");
                 GenArrays();
             // Generate Texture for the TextRect 
-                glGenTextures(1, &textTexture);
+                glGenTextures(1,&textTexture);
+                glBindTexture(GL_TEXTURE_2D, textTexture);
+                glTexImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+                glTexOpt(GL_NEAREST,GL_CLAMP_TO_EDGE);
+                glBindTexture(GL_TEXTURE_2D, 0);
             // Generate texture for frame buffer
-                glGenTextures(1, &framebufferTexture);
+                glGenTextures(1,&framebufferTexture);
                 glBindTexture(GL_TEXTURE_2D, framebufferTexture);
                 glTexImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+                glTexOpt(GL_NEAREST,GL_CLAMP_TO_EDGE);
                 glBindTexture(GL_TEXTURE_2D, 0);
         }
 
         void DeleteShaderProgram(Shader shader) {
             glDeleteProgram(shader.Program);
+        }
+
+        GLint GLuint1f(Shader shader,float in,const char* var){
+            glUniform1f(glGetUniformLocation(shader.Program, var), in);
+        }
+
+        GLint GLuint2f(Shader shader,float in1,float in2,const char* var){
+            glUniform2f(glGetUniformLocation(shader.Program, var), in1, in2);
+        }
+
+        GLint GLumatrix4fv(Shader shader,GLfloat* in,const char* var){
+            glUniformMatrix4fv(glGetUniformLocation(shader.Program, var), 1, GL_FALSE, in);
         }
 
 #endif // SHADER_H

@@ -11,7 +11,7 @@
             glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);//alpha blending
             glBindTexture(GL_TEXTURE_2D, framebufferTexture);
             CreateTextureWithPBO(framebuffer,framebufferTexture);
-            ScreenOrthoCam(x, y, width, height,0,shaderdefault);
+            ScreenCam(x, y, width, height,0,shaderdefault);
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_BLEND);
         }
