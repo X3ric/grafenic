@@ -4,6 +4,8 @@
     #include <stdarg.h>
     #include <math.h>
     #include <sys/stat.h>
+    #include <time.h>
+    #include <stdio.h>
     #include <unistd.h>
     #include <limits.h>
 
@@ -38,6 +40,7 @@
             va_end(args);
             return buffer;
         }
+
 
         int textint(char *str) {
             return atoi(str);
@@ -87,7 +90,7 @@
             return new_text;
         }
 
-        const char *textjoin(const char **textList, int count, const char *delimiter) {
+        const char *textjoin(const char **textList, const char *delimiter, int count) {
             static char buffer[1024];
             buffer[0] = '\0';
             for (int i = 0; i < count; ++i) {
@@ -170,16 +173,52 @@
             }
             return (rand()%(abs(max-min)+1) + min);
         }
+
+    // Utils
+
+        void OpenURL(const char *url) {
+            if (url == NULL) {
+                return;
+            }
+            char cmd[1024];
+            snprintf(cmd, sizeof(cmd), "xdg-open '%s'", url);
+            system(cmd);
+        }
+
+        void SetClipboardText(const char *text) {
+            if (text == NULL) {
+                return;
+            }
+            char *cmd = "xclip -selection clipboard";
+            FILE *xclip = popen(cmd, "w");
+            if (xclip == NULL) {
+                return;
+            }
+            fputs(text, xclip);
+            pclose(xclip);
+        }
+
+        char *GetClipboardText(void) {
+            char *cmd = "xclip -selection clipboard -o";
+            FILE *xclip = popen(cmd, "r");
+            if (xclip == NULL) {
+                return NULL;
+            }
+            char *text = NULL;
+            size_t size = 0;
+            ssize_t nread;
+            if (getline(&text, &size, xclip) == -1) {
+                pclose(xclip);
+                free(text);
+                return NULL;
+            }
+            pclose(xclip);
+            return text;
+        }
     
     // Smothing
 
-        float Lerp(float start, float end, float t) {
-            if (t < 0.0f) t = 0.0f;
-            if (t > 1.0f) t = 1.0f;
-            return start + (end - start) * t;
-        }
-
-        float Easing(const char *text, float t) {
+        float Easing(float t, const char *text) {
             if (strcmp(text, "Linear") == 0) {
                 return t;
             } else if (strcmp(text, "SineIn") == 0) {
@@ -203,6 +242,17 @@
             } else {
                 return t;
             }
+        }
+
+        float Motion(float speed, float intensity) {
+            float sineValue = sin(glfwGetTime() * speed);
+            return (sineValue + 1.0f) * 0.5f * intensity;
+        }
+
+        float Lerp(float start, float end, float t) {
+            if (t < 0.0f) t = 0.0f;
+            if (t > 1.0f) t = 1.0f;
+            return start + (end - start) * t;
         }
 
     // Time
@@ -240,18 +290,15 @@
             return (fontsize > 0) ? fmax(scaledFontSize, 1) : 0;
         }
 
-    // Saving
+    // File checks
 
-        #define FILE_LENGTH 100
-        #define DATA_FILE "res/data.txt"
-
-        typedef struct FileValue {
-            char key[FILE_LENGTH];
-            char value[FILE_LENGTH];
-            struct FileValue *next;
-        } FileValue;
-
-        FileValue *head = NULL;
+        bool DirExists(const char* path) {
+            struct stat statbuf;
+            if (stat(path, &statbuf) != 0) {
+                return false;
+            }
+            return S_ISDIR(statbuf.st_mode);
+        }
 
         bool FileExists(const char* filename) {
             FILE* file = fopen(filename, "r");
@@ -262,81 +309,74 @@
             return false;
         }
 
-        void FileWrite() {
-            FILE *file = fopen(DATA_FILE, "w");
+        time_t GetFileModTime(const char* filePath) {
+            struct stat attrib;
+            if (stat(filePath, &attrib) != 0) {
+                perror("Error getting file modification time");
+                return -1; // or some other error indicator
+            }
+            return attrib.st_mtime;
+        }
+
+    // File Saving
+
+        char* FileLoad(const char* path) {
+            FILE* file = fopen(path, "r");
+            if (file == NULL) {
+                // File doesn't exist, create it and return an empty string
+                file = fopen(path, "w");
+                if (file == NULL) {
+                    perror("Error opening file for reading/writing");
+                    return NULL;
+                }
+                fclose(file);
+                return strdup("");
+            }
+            fseek(file, 0, SEEK_END);
+            long file_size = ftell(file);
+            fseek(file, 0, SEEK_SET);
+            if (file_size <= 0) {
+                fclose(file);
+                return strdup("");
+            }
+            char* text = (char*)malloc(file_size + 1);
+            if (text == NULL) {
+                perror("Error allocating memory for file content");
+                fclose(file);
+                return NULL;
+            }
+            if (fread(text, 1, file_size, file) != (size_t)file_size) {
+                perror("Error reading file content");
+                free(text);
+                fclose(file);
+                return NULL;
+            }
+            text[file_size] = '\0';
+            fclose(file);
+            return text;
+        }
+
+        char* FileSave(const char* path, const char* text) {
+            FILE* file = fopen(path, "w");
             if (file == NULL) {
                 perror("Error opening file for writing");
-                return;
+                return NULL;
             }
-            FileValue *current = head;
-            while (current != NULL) {
-                fprintf(file, "%s,%s\n", current->key, current->value);
-                current = current->next;
+            if (fprintf(file, "%s\n", text) < 0) {
+                perror("Error writing to file");
+                fclose(file);
+                return NULL;
             }
             fclose(file);
+            return strdup(text);
         }
 
-        void FileSave(const char *key, const char *value) {
-            FileValue **current = &head;
-            while (*current != NULL && strcmp((*current)->key, key) != 0) {
-                current = &(*current)->next;
-            }
-            if (*current == NULL) {
-                *current = (FileValue *)malloc(sizeof(FileValue));
-                strcpy((*current)->key, key);
-                strcpy((*current)->value, value);
-                (*current)->next = NULL;
-            } else {
-                strcpy((*current)->value, value);
-            }
-            FileWrite();
-        }
-
-        void FileLoad(const char *key, char *value) {
-            FileValue *current = head;
-            while (current != NULL) {
-                if (strcmp(current->key, key) == 0) {
-                    strcpy(value, current->value);
-                    return;
-                }
-                current = current->next;
-            }
-            strcpy(value, "");
-        }
-
-        void FileClear() {
-            FileValue *current = head;
-            FileValue *next;
-            while (current != NULL) {
-                next = current->next;
-                free(current);
-                current = next;
-            }
-            head = NULL;
-            if (remove(DATA_FILE) != 0) {
+        void FileClear(const char* path) {
+            if (remove(path) != 0) {
                 perror("Error deleting file");
             } else {
                 printf("File successfully deleted\n");
             }
-        }
-
-        void FileLoadAll() {
-            char key[FILE_LENGTH], value[FILE_LENGTH];
-            FILE *file = fopen(DATA_FILE, "r");
-            if (file == NULL) {
-                perror("Error opening file for reading");
-                return;
-            }
-            while (fscanf(file, "%99[^,],%99[^\n]\n", key, value) == 2) {
-                FileSave(key, value);
-            }
-            fclose(file);
-        }
-
-        time_t GetFileModificationTime(const char* filePath) {
-            struct stat attrib;
-            stat(filePath, &attrib);
-            return attrib.st_mtime;
         }
 
     // OpenGL utils

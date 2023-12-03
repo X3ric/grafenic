@@ -100,9 +100,7 @@
                     int pixel = j * width + k;
                     unsigned char alpha = bitmap[pixel];
                     if (alpha > 0) {
-                        DrawPixel(ch_x + k + xoffset, y - j - yoffset, (Color){color.r, color.g, color.b, color.a / (alpha*3)}); // blended color with font alpha
-                        //DrawPixel(ch_x + k + xoffset, y - j - yoffset, (Color){color.r, color.g, color.b, color.a}); // only setted  font color
-                        //DrawPixel(ch_x + k + xoffset, y - j - yoffset, (Color){color.r, color.g, color.b, alpha}); // only alpha of the font
+                        DrawPixel(ch_x + k + xoffset, y - j - yoffset, (Color){color.r, color.g, color.b, color.a / (alpha*3)});
                     }
                 }
             }
@@ -188,7 +186,58 @@
         // Draw textured rectangle
         glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBindTexture(GL_TEXTURE_2D, textTexture);
-        ScreenCam(x, y, imageWidth, imageHeight,angleInDegrees,shaderdefault);
+        Quad(x, y, imageWidth, imageHeight,angleInDegrees,shaderdefault);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glDisable(GL_BLEND);
+    }
+
+    void DrawTextRectBottom(int x, int y, float imageWidth, float imageHeight, Font font, float fontSize, const char* text, Color color,int angleInDegrees) {
+        if (fontSize <= 1) fontSize = 1;
+        if (color.a == 0) color.a = 255;
+        if (!font.fontBuffer) return;
+        float scale = stbtt_ScaleForPixelHeight(&font.fontInfo, fontSize);
+        int ascent, descent, lineGap;
+        stbtt_GetFontVMetrics(&font.fontInfo, &ascent, &descent, &lineGap);
+        unsigned char* bitmap = calloc(imageWidth * imageHeight * 4, sizeof(unsigned char));
+        if (!bitmap) return;
+        int ch_x = x, ch_y = y;
+        int lineWidth = 0;
+        for (size_t i = 0; text[i] != '\0'; ++i) {
+            int advanceWidth, leftSideBearing;
+            stbtt_GetCodepointHMetrics(&font.fontInfo, text[i], &advanceWidth, &leftSideBearing);
+            if (text[i] == '\n' || (lineWidth + advanceWidth * scale > imageWidth && text[i] != ' ')) {
+                ch_y += (ascent - descent + lineGap) * scale;
+                ch_x = x;
+                lineWidth = 0;
+            }
+            if (text[i] == '\n') continue;
+            int c_width, c_height, xoffset, yoffset;
+            unsigned char* char_bitmap = stbtt_GetCodepointBitmap(&font.fontInfo, 0, scale, text[i], &c_width, &c_height, &xoffset, &yoffset);
+            for (int j = 0; j < c_height; ++j) {
+                for (int k = 0; k < c_width; ++k) {
+                    int bitmap_x = ch_x + k + xoffset;
+                    int bitmap_y = ch_y - j - yoffset;
+                    if (bitmap_x < 0 || bitmap_x >= imageWidth || bitmap_y < 0 || bitmap_y >= imageHeight) continue;
+                    int pixel = (bitmap_y * imageWidth + bitmap_x) * 4;
+                    unsigned char alpha = char_bitmap[j * c_width + k];
+                    bitmap[pixel] = color.r;
+                    bitmap[pixel + 1] = color.g;
+                    bitmap[pixel + 2] = color.b;
+                    bitmap[pixel + 3] = (color.a * alpha) / 255;
+                }
+            }
+            ch_x += roundf(advanceWidth * scale);
+            lineWidth += roundf(advanceWidth * scale);
+            stbtt_FreeBitmap(char_bitmap, NULL);
+        }
+        // Bind bitmap to OpenGL Created texture
+        glBindTexture(GL_TEXTURE_2D, textTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, bitmap);
+        free(bitmap);
+        // Draw textured rectangle
+        glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBindTexture(GL_TEXTURE_2D, textTexture);
+        Quad(x, y, imageWidth, imageHeight,angleInDegrees,shaderdefault);
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_BLEND);
     }

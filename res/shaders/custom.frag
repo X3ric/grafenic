@@ -12,13 +12,20 @@ float motion(in float intensity,in float time) {
    return (sin(iTime * time) + intensity) / 2.0;
 }
 
-vec4 waves( in vec2 fragCoord ) {
+vec3 rainbow(in float time) {
+    float red = sin(time) * 0.5 + 0.5;
+    float green = sin(time + 2.0/3.0 * 3.1415) * 0.5 + 0.5;
+    float blue = sin(time + 4.0/3.0 * 3.1415) * 0.5 + 0.5;
+    return vec3(red, green, blue);
+}
+
+vec4 waves( in vec3 Color, in vec2 fragCoord) {
     vec2 uv =  texCoord + (2.0 * fragCoord - iResolution.xy) / min(iResolution.x, iResolution.y);
     for(float i = 1.0; i < 10.0; i++){
         uv.x += 0.6 / i * cos(i * 2.5* uv.y + iTime);
         uv.y += 0.6 / i * cos(i * 1.5 * uv.x + iTime);
     }
-    return vec4(-vec3(0.01)/abs(sin(iTime-uv.y-uv.x)),1.0);   
+    return vec4(Color/abs(sin(iTime-uv.y-uv.x)),1.0);   
 }
 
 vec4 blur(in sampler2D textureSampler, in vec2 texCoord, float intensity) {
@@ -70,7 +77,7 @@ void mainImage(in vec2 texCoord, in vec2 fragCoord, out vec4 fragColor) {
     //+ (aberration(screenTexture,texCoord,sin(iTime/2)*2.0) - texture(screenTexture, texCoord))
     //+ (blur(screenTexture,texCoord,sin(iTime)*1.0) - texture(screenTexture, texCoord)) 
     //+ (glow(screenTexture,texCoord,sin(iTime/2)*2.0) - texture(screenTexture, texCoord))
-    //+ (waves(fragCoord))
+    //+ (waves(rainbow(iTime),fragCoord))
     ;
 }
 

@@ -1,63 +1,48 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
+    #include <stdbool.h>
+
+    typedef struct {
+        GLFWwindow* w;
+    } Window;
+
+    Window window;
+
+    typedef struct {
+        bool input;
+        bool wireframe;
+        bool fps;
+    } Debug;
+
+    Debug debug;
+
     const char* TITLE = "\0";
     int SCREEN_WIDTH;
     int SCREEN_HEIGHT;
     int WIDTH;
     int HEIGHT;
-
-    GLFWwindow* window;
-
+    
     GLubyte* framebuffer;
 
-    double frametime;
+    double deltatime;
     int fpslimit;
     double fps;
 
-    #include <stdbool.h>
-    typedef struct {
-        bool input;
-        bool wiredframe;
-        bool fps;
-    } Debug;
-    Debug debug;
-
     #include <grafenic/input.h>
-
     #include <grafenic/utils.h>
-
     #include <grafenic/audio.h>
-
-    bool pixels = false;
-
     #include <grafenic/draw/init.h>
-
-    bool cursor = true;
-    bool oldcursor = true;
-
-    bool vsync = false;
-    bool oldvsync = false;
-
-    bool fullscreen = false;
-    bool oldfullscreen = false;
-
-    bool visible = true;
-    bool oldvisible = true;
-
-    bool floating = true;
-    bool transparent = false;
-    bool decorated = true;
 
     void WindowFrames(){
         static double previousframetime = 0.0;
         double targetTime = 1.0 / fpslimit;
-        frametime = glfwGetTime();
-        double elapsedTime = frametime - previousframetime;
+        deltatime = glfwGetTime();
+        double elapsedTime = deltatime - previousframetime;
         if (fpslimit != 0) {
             while (elapsedTime < targetTime) {
-                frametime = glfwGetTime();
-                elapsedTime = frametime - previousframetime;
+                deltatime = glfwGetTime();
+                elapsedTime = deltatime - previousframetime;
             }
         }
         if (elapsedTime != 0) {
@@ -65,9 +50,8 @@
         } else {
             fps = 0.0;
         }
-        previousframetime = frametime;
+        previousframetime = deltatime;
         if(debug.fps){
-            //ClearOutput();
             print("FPS: %.0f\n",fps);
         }
     }
@@ -78,22 +62,31 @@
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         WindowFrames();
     }
+
+    bool cursor = true;
+    bool oldcursor = true;
+    bool vsync = false;
+    bool oldvsync = false;
+    bool fullscreen = false;
+    bool oldfullscreen = false;
+    bool visible = true;
+    bool oldvisible = true;
     
     void WindowProcess() {
         MouseInit();
         if (fullscreen != oldfullscreen) {
             if (fullscreen) {
-                glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, SCREEN_WIDTH, SCREEN_WIDTH, 0);
+                glfwSetWindowMonitor(window.w, glfwGetPrimaryMonitor(), 0, 0, SCREEN_WIDTH, SCREEN_WIDTH, 0);
             } else {
-                glfwSetWindowMonitor(window, NULL, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+                glfwSetWindowMonitor(window.w, NULL, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
             }
             oldfullscreen = fullscreen;
         }
         if (cursor != oldcursor) {
             if (cursor) {
-                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                glfwSetInputMode(window.w, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             } else {
-                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+                glfwSetInputMode(window.w, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
             }
             oldcursor = cursor;
         }
@@ -107,33 +100,41 @@
         } 
         if (visible != oldvisible) {
             if (visible) {
-                glfwShowWindow(window);
+                glfwShowWindow(window.w);
             } else {
-                glfwHideWindow(window);
+                glfwHideWindow(window.w);
             }
             oldvisible = visible;
         } 
         if(framebuffer){DrawPixels(0,0,SCREEN_WIDTH,SCREEN_HEIGHT);}
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(window.w);
         glfwPollEvents();
     }
 
     const int MIN_PIXEL = 1;
+
     void window_buffersize_callback(GLFWwindow* window, int width, int height)
     {
         SCREEN_WIDTH = width < MIN_PIXEL ? MIN_PIXEL : width;
         SCREEN_HEIGHT = height < MIN_PIXEL ? MIN_PIXEL : height;
-        if(!pixels){glfwSetWindowAspectRatio(window, SCREEN_WIDTH, SCREEN_HEIGHT);}
+        //if(!pixels){glfwSetWindowAspectRatio(window.w, SCREEN_WIDTH, SCREEN_HEIGHT);}
         glViewport(0, 0, (GLsizei)SCREEN_WIDTH, (GLsizei)SCREEN_HEIGHT);
     }
 
     void update(void);
+
     void window_refresh_callback(GLFWwindow* window)
     {
         WindowClear();
         update();
         WindowProcess();   
     }
+
+    bool floating = true;
+    bool transparent = false;
+    bool decorated = true;
+    int SAMPLES = 0;
+    int REFRESH_RATE = 0;
 
     int WindowInit(int width, int height, const char* title)
     {
@@ -147,8 +148,7 @@
             printf("Failed to initialize GLFW\n");
             return -1;
         }
-        //glfwWindowHint(GLFW_SAMPLES, 4); // 4x antialiasing
-        //glEnable(GL_MULTISAMPLE);
+        glfwWindowHint(GLFW_SAMPLES, SAMPLES);
         glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
         if (transparent) {
             glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GL_TRUE); 
@@ -161,22 +161,22 @@
         } else {
             glfwWindowHint(GLFW_RESIZABLE , GLFW_TRUE);
         }
-        //glfwWindowHint(GLFW_REFRESH_RATE, 0);
+        glfwWindowHint(GLFW_REFRESH_RATE, REFRESH_RATE);
         //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);//forced new opengl version
         //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
         //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, title, NULL, NULL);
-        if (!window) {
-            printf("Failed to open GLFW window.\n");
+        window.w = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, title, NULL, NULL);
+        if (!window.w) {
+            printf("Failed to open GLFW window.w\n");
             glfwTerminate();
             return -1;
         }
-        glfwMakeContextCurrent(window);
-        glfwSetCharCallback(window, CharCallback);
-        glfwSetKeyCallback(window, KeyCallback);
-        glfwSetScrollCallback(window, ScrollCallback);
-        glfwSetFramebufferSizeCallback(window, window_buffersize_callback);
-        glfwSetWindowRefreshCallback(window, window_refresh_callback);
+        glfwMakeContextCurrent(window.w);
+        glfwSetCharCallback(window.w, CharCallback);
+        glfwSetKeyCallback(window.w, KeyCallback);
+        glfwSetScrollCallback(window.w, ScrollCallback);
+        glfwSetFramebufferSizeCallback(window.w, window_buffersize_callback);
+        glfwSetWindowRefreshCallback(window.w, window_refresh_callback);
         printf("Renderer: %s\n", glGetString(GL_RENDERER));
 	    printf("OpenGL version supported %s\n", glGetString(GL_VERSION));
         //glewExperimental=true;
@@ -189,44 +189,43 @@
         } else {
             glfwSwapInterval(0);
         }
-        glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
-
-        //glEnable(GL_DEPTH_TEST);//depth
+        glfwSetInputMode(window.w, GLFW_STICKY_KEYS, GLFW_TRUE);
+        glEnable(GL_DEPTH_TEST);
         //glDepthFunc(GL_LEQUAL);
         //glDisable(GL_CULL_FACE);
         //glCullFace(GL_BACK);
-
+        //glEnable(GL_MULTISAMPLE);
         InitializeOpenGL();
-
         print("Loaded\n");
         return 0;
     }
 
     int WindowState() {
-        return glfwWindowShouldClose(window);
+        return glfwWindowShouldClose(window.w);
     }
 
     void WindowStateSet(bool state) {
         if (state) {
-            glfwSetWindowShouldClose(window, GLFW_TRUE);
+            glfwSetWindowShouldClose(window.w, GLFW_TRUE);
         } else  {
-            glfwSetWindowShouldClose(window, GLFW_FALSE);            
+            glfwSetWindowShouldClose(window.w, GLFW_FALSE);            
         }
     }
 
     void WindowClose()
     {
-        glfwSetKeyCallback(window, NULL);
+        glfwSetKeyCallback(window.w, NULL);
         print("Exit\n");
         AudioStop();
         glDeleteVertexArrays(1, &VAO);
         glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &EBO);
         glDeleteBuffers(2, PBO);
         glDeleteProgram(shaderdefault.Program);
         stbi_image_free(img.data);
         free(framebuffer);
         framebuffer = NULL;
-        glfwDestroyWindow(window);
+        glfwDestroyWindow(window.w);
         glfwTerminate();
     }
 

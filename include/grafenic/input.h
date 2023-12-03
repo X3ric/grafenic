@@ -5,8 +5,6 @@
     #include <stdlib.h>
     #include <string.h>
     #include <ctype.h>
-    
-    GLFWwindow* window;
 
     int KeyChar(const char* character) {
         if (!character) {
@@ -120,37 +118,44 @@
     // KEYS
         int isKeyDown(const char* character) {
             int key = KeyChar(character);
-            return glfwGetKey(window, key) == GLFW_PRESS;
+            return glfwGetKey(window.w, key) == GLFW_PRESS;
         }
 
         int isKeyUp(const char* character) {
             int key = KeyChar(character);
-            return glfwGetKey(window, key) == GLFW_RELEASE;
+            return glfwGetKey(window.w, key) == GLFW_RELEASE;
         }
 
-        bool isKeyPressed(const char* character,double interval) {
-            static bool isKeyToggled = false;
+        bool isKeyPressed(const char* character, double interval) {
             static int lastKey = -1;
-            static double lastTime = 0;
+            static double lastPressTime = 0;
+            static bool initialPress = true;
             int key = KeyChar(character);
+            double currentTime = glfwGetTime();
             if (key == GLFW_KEY_UNKNOWN || key > GLFW_KEY_LAST) {
                 return false;
             }
-            double currentTime = glfwGetTime();
-            if (glfwGetKey(window, key) == GLFW_PRESS) {
-                if (key != lastKey || currentTime - lastTime > interval) {
-                    isKeyToggled = (key != lastKey) ? true : !isKeyToggled;
+            if (glfwGetKey(window.w, key) == GLFW_PRESS) {
+                if (key != lastKey) {
                     lastKey = key;
-                    lastTime = currentTime;
+                    lastPressTime = currentTime;
+                    initialPress = true;
+                    return true;
+                } else if (currentTime - lastPressTime > interval && !initialPress) {
+                    lastPressTime = currentTime;
+                    return true;
                 }
+
+                initialPress = false;
             } else {
                 if (key == lastKey) {
                     lastKey = -1;
-                    isKeyToggled = false;
+                    initialPress = false;
                 }
             }
-            return isKeyToggled;
+            return false;
         }
+
         
         static int lastState[GLFW_KEY_LAST + 1] = {0};
         static int toggleState[GLFW_KEY_LAST + 1] = {0};
@@ -163,7 +168,7 @@
             if (isKeyDown(character) && lastState[key] == GLFW_RELEASE) {
                 toggleState[key] = !toggleState[key];
             }
-            lastState[key] = glfwGetKey(window, key);
+            lastState[key] = glfwGetKey(window.w, key);
             return toggleState[key];
         }
 
@@ -174,6 +179,13 @@
             }
         }
 
+        char lastPressedChar = '\0';
+        void CharCallback(GLFWwindow* window, unsigned int codepoint) {
+            if (codepoint < 128) {
+                lastPressedChar = (char)codepoint;
+            }
+        }
+        
         void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
             const char* actionStrings[] = {"RELEASED", "PRESSED", "REPEATED", "RELASED"};
             const char* actionString = action >= GLFW_PRESS && action <= GLFW_REPEAT ? actionStrings[action] : actionStrings[3];
@@ -199,16 +211,8 @@
                 }
             }
             if(debug.input){
-                printf("%s[%s] %s %d %d\n", modString, keyNameBuffer,actionString, scancode, key);
+                printf("%s[%s] %s %d %d %c\n", modString, keyNameBuffer,actionString, scancode, key,lastPressedChar);
             }
-        }
-
-        char lastPressedChar = '\0';
-        void CharCallback(GLFWwindow* window, unsigned int codepoint) {
-            if (codepoint < 128) {
-                lastPressedChar = (char)codepoint;
-            }
-            //printf("%c", codepoint);
         }
     
     // GAMEPAD
@@ -265,7 +269,7 @@
             if (isKeyDown(character) && lastState[key] == GLFW_RELEASE) {
                 toggleState[key] = !toggleState[key];
             }
-            lastState[key] = glfwGetKey(window, key);
+            lastState[key] = glfwGetKey(window.w, key);
             return toggleState[key];
         }
 
@@ -307,7 +311,7 @@
         bool mousemoving = false;
 
         Mouse MouseInit() {
-            glfwGetCursorPos(window, &mouse.x, &mouse.y);
+            glfwGetCursorPos(window.w, &mouse.x, &mouse.y);
             if (mouse.x != lastmouse.x || mouse.y != lastmouse.y) {
                 lastmouse = mouse;
                 mousemoving = true;
@@ -321,15 +325,15 @@
         static int mouseToggleState[GLFW_MOUSE_BUTTON_LAST + 1] = {0};
 
         int isMouseButtonDown(int button) {
-            return glfwGetMouseButton(window, button) == GLFW_PRESS;
+            return glfwGetMouseButton(window.w, button) == GLFW_PRESS;
         }
 
         int isMouseButtonUp(int button) {
-            return glfwGetMouseButton(window, button) == GLFW_RELEASE;
+            return glfwGetMouseButton(window.w, button) == GLFW_RELEASE;
         }
 
         int isMouseButton(const int button) {
-            int currentState = glfwGetMouseButton(window, button);
+            int currentState = glfwGetMouseButton(window.w, button);
             if (currentState == GLFW_PRESS && mouseLastState[button] == GLFW_RELEASE) {
                 mouseToggleState[button] = !mouseToggleState[button];
             }
@@ -355,7 +359,7 @@
         }
 
         void SetCursorPos(float x, float y) {
-            glfwSetCursorPos(window,x,y);
+            glfwSetCursorPos(window.w,x,y);
         }
 
 #endif // INPUT_H

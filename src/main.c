@@ -2,137 +2,51 @@
 
 Font font;
 Image img;
-Image box;
+Shader custom;
 
 float mousecursorx;
 float mousecursory;
 float timer;
 
 Color pixelColor;
-Shader shaderx;
 
-const char* fragmentsh = 
-"#version 330 core\n"
-"\n"
-"uniform vec2 iMouse;\n"
-"uniform float iTime;\n"
-"uniform vec2 iResolution;\n"
-"uniform sampler2D screenTexture;\n"
-"\n"
-"in vec2 texCoord;\n"
-"out vec4 fragColor;\n"
-"\n"
-"void mainImage(in vec2 texCoord, in vec2 fragCoord, out vec4 fragColor) {\n"
-"    fragColor = vec4(1.0,1.0,1.0,1.0);\n"
-"}\n"
-"\n"
-"void main() {\n"
-"    mainImage(texCoord, gl_FragCoord.xy, fragColor);\n"
-"}\n";
+#include "ui.c"
 
-void DrawCenteredTextRows(Font font,int section,int rows, const char* textContent) { // Text Rows
-    int y = SCREEN_HEIGHT / 12;
-    int sectionWidth = SCREEN_WIDTH / rows;
-    int fontsize = Scaling(50);
-    TextSize textSize = GetTextSize(font, fontsize, textContent);
-    int textX = section * sectionWidth + (sectionWidth - textSize.width) / 2;
-    int textY = y/2 + textSize.height/2;
-    DrawText(textX, textY , font, fontsize, textContent, WHITE);
-} 
-void DrawCenteredTextColumn(Font font, int section, int totalSections, const char* textContent) { // Text Collumns
-    int sectionHeight = SCREEN_HEIGHT / totalSections;
-    int fontsize = Scaling(40);
-    TextSize textSize = GetTextSize(font, fontsize, textContent);
-    int textX = 10;
-    int textY = section * sectionHeight + (textSize.height);
-    DrawText(textX, textY, font, fontsize, textContent, WHITE);
-} 
-void DrawBar(Font font) { // Bottom Bar with info
-    int y = SCREEN_HEIGHT / 12;
-    DrawRect(0, 0, SCREEN_WIDTH, y, (Color){50, 50, 50,100});
-    DrawRectBorder(0, 0, SCREEN_WIDTH, y, 5, (Color){0, 0, 0,175});
-    int texts = 3;
-    // Mouse info
-        DrawCenteredTextRows( font,0,texts, text("Mouse = X: %.0f Y: %.0f", mouse.x, mouse.y));
-    // Scroll info
-        DrawCenteredTextRows( font,1,texts, text("Scroll = X: %.0f Y: %.0f", mousescroll.x, mousescroll.y));
-    // Window info 
-        DrawCenteredTextRows( font,2,texts, text("Size = X: %d Y: %d", SCREEN_WIDTH, SCREEN_HEIGHT));
-} 
-void DrawPopUp(const char* title, Font font,int fontsize, int width, int height) { // PopUp with centered text
-    int x = (SCREEN_WIDTH / 2) - (width / 2);
-    int y = (SCREEN_HEIGHT / 2) - (height / 2);
-    DrawRect(x, y, width, height, (Color){50, 50, 50,100});
-    DrawRectBorder(x, y, width, height, 5, (Color){0, 0, 0});
-    TextSize text = GetTextSize(font, fontsize, title);
-    DrawText((SCREEN_WIDTH / 2) - (text.width / 2) , (SCREEN_HEIGHT / 2) + (text.height / 2) , font, fontsize, title, WHITE);
-} 
-void Fps(int x , int y, Font font, int size) { // FPS info
-    const char* title = text("FPS: %.0f", fps);
-    DrawText( x, y, font, size, title, WHITE);
-} 
-void ExitPromt(Font font) { // Escape PopUp
-    if (isKey("Esc")) {
-        DrawPopUp("Quit?Yes/No",font,Scaling(17),SCREEN_WIDTH/18, SCREEN_HEIGHT/35);
-        if (isKeyDown("Y")) {
-            WindowStateSet(true);
-        }
-        if (isKeyDown("N")) {
-            isKeyReset("Esc"); // inverts isKey("Esc") return
-        }
-    }
-} 
-void TextInfo(){ // Text info
-    int texts = 12;
-    DrawCenteredTextColumn(font,4,texts, text("Mouse moving: %s", mousemoving ? "ON" : "OFF"));
-    DrawCenteredTextColumn(font,5,texts, text("M = mouse state: %s", cursor ? "ON" : "OFF"));
-    DrawCenteredTextColumn(font,6,texts, text("V = vsync state: %s", vsync ? "ON" : "OFF"));
-    DrawCenteredTextColumn(font,7,texts, text("M1 = circle state: %s", isMouseButton(0) ? "ON" : "OFF"));
-    DrawCenteredTextColumn(font,8,texts, text("Esc = exitbar state: %s", isKey("Esc") ? "ON" : "OFF"));
-    DrawCenteredTextColumn(font,9,texts, text("Space = bar state: %s", !isKey("Space") ? "ON" : "OFF"));
-} 
 void update(void){
     // Movement Camera
-        double speed;
-        if (isKeyDown("LeftShift")) {
-            speed = 0.2f;
-        } else {
-            speed = 0.1f;
-        }
-        if (isKeyDown("w")) {
-            camera.y += speed * frametime;
-        }
-        if (isKeyDown("s")) {
-            camera.y -= speed * frametime;
-        }
-        if (isKeyDown("a")) {
-            camera.x += speed * frametime;
-        }
-        if (isKeyDown("d")) {
-            camera.x -= speed * frametime;
-        }
-        if (isKeyDown("r")) {
-            camera.x = 0.0;
-            camera.y = 0.0;
-            camera.angle = 0.0;
-        }
-        if (mousescroll.y < 0) {mousescroll.y = 0;}
-        camera.z = mousescroll.y;
-        if (isKeyDown("e")) {
-           camera.angle += 0.001f * frametime;
-        } else if (isKeyDown("q")) {
-           camera.angle -= 0.001f * frametime;
-        }
+        //double speed;
+        //if (isKeyDown("LeftShift")) {
+        //    speed = 0.2f;
+        //} else {
+        //    speed = 0.1f;
+        //}
+        //if (isKeyDown("w")) {
+        //    camera.y += speed * deltatime;
+        //}
+        //if (isKeyDown("s")) {
+        //    camera.y -= speed * deltatime;
+        //}
+        //if (isKeyDown("a")) {
+        //    camera.x += speed * deltatime;
+        //}
+        //if (isKeyDown("d")) {
+        //    camera.x -= speed * deltatime;
+        //}
+        //if (isKeyDown("r")) {
+        //    camera.x = 0.0;
+        //    camera.y = 0.0;
+        //    camera.angle = 0.0;
+        //}
+        //if (mousescroll.y < 0) {mousescroll.y = 0;}
+        //camera.z = mousescroll.y;
+        //if (isKeyDown("e")) {
+        //   camera.angle += 0.001f * deltatime;
+        //} else if (isKeyDown("q")) {
+        //   camera.angle -= 0.001f * deltatime;
+        //}
     // DrawImage
-        DrawImageShader(img,0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,0,shaderx);
+        //DrawImageShader(img,0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,0,custom);
         //DrawImage(img,0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,0);
-        //debug.wiredframe = true; //debug single part
-        //TriangleGL 
-            //GLfloat x1 = 0.0f, y1 = 0.0f;
-            //GLfloat x2 = 0.0f, y2 = SCREEN_HEIGHT;
-            //GLfloat x3 = SCREEN_WIDTH,  y3 = SCREEN_HEIGHT;
-            //Triangle(shaderx,0, x1, y1, x2, y2, x3, y3);
-        //debug.wiredframe = false; //stop debugging
     // Input Example
         //      Key                    MouseButton                      Info
         // isKey,isKeyReset  // isMouseButton,isMouseButtonReset  // key Bool
@@ -175,6 +89,11 @@ void update(void){
             //        DrawCircleBorder(mousecursorx, mousecursory, circleSize, 2, PURPLE);
             //    }
             //}
+    // Easing Lerp
+        //int sizeball  = Lerp(0, 50,  Easing(Motion(1.0,0.5), "Linear"));
+        //int positionx = Lerp(0, SCREEN_WIDTH,  Easing(Motion(1.0,1.0), "CubicInOut"));
+        //int positiony = Lerp(0, SCREEN_HEIGHT, Easing(Motion(1.0,1.0), "CubicInOut"));
+        //DrawCircle(positionx, positiony, sizeball, VIOLET);
     // DrawLine Examples "Cross Screen"
         //DrawLine(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 5, BLACK);
         //DrawLine(0, SCREEN_HEIGHT, SCREEN_WIDTH, 0, 5, BLACK);
@@ -185,7 +104,7 @@ void update(void){
         //    if(isKeyDown("+")){
         //        size += 1;
         //    }
-        //    if(isKeyDown("-")){
+        //    if(isKeyDown("-") && size > 0){
         //        size -= 1;
         //    }
         //DrawTriangle(x - size, y, x + size, y, x, y + size, PURPLE);
@@ -195,25 +114,24 @@ void update(void){
         //const char* textContent = text("R:%d G:%d B:%d A:%d", pixelColor.r, pixelColor.g, pixelColor.b, pixelColor.a);
         //TextSize textSize = GetTextSize(font, fontsize, textContent);
         //DrawText(SCREEN_WIDTH/2-(textSize.width/2), SCREEN_HEIGHT/6-(textSize.height/2), font, fontsize, textContent, WHITE);
+    // Experimental WorkInProgress
+        //debug.wireframe = true; //debug single part
+        // TriangleGL 
+            GLfloat x1 = SCREEN_WIDTH/2, y1 = 0;
+            GLfloat x2 = 0.0f, y2 = SCREEN_HEIGHT;
+            GLfloat x3 = SCREEN_WIDTH,  y3 = SCREEN_HEIGHT;
+            //Triangle(custom,0, x1, y1, x2, y2, x3, y3);
+            Zelda(custom,0, x1, y1, x2, y2, x3, y3);
+        //debug.wireframe = false; //stop debugging
+        //DrawTextAtlas(0, 0, font, Scaling(50), text("FPS: %.0f", fps), WHITE);
+        //DrawTextRect(0,0,SCREEN_WIDTH, SCREEN_HEIGHT,font, Scaling(50), "text", WHITE,0);
     // Modular Utils Funcitons
         //if(!isKey("Space")){DrawBar(font);}
         //TextInfo();
         //Fps(0, SCREEN_HEIGHT, font, Scaling(50));
-        //ExitPromt(font);
-    // Experimental WorkInProgress
-        //DrawTextAtlas(0, 0, font, Scaling(50), text("FPS: %.0f", fps), WHITE);
-        //DrawTextRect(0,0,SCREEN_WIDTH, SCREEN_HEIGHT,font, Scaling(50), text("FPS: %.0f", fps), WHITE,0);
-        
+        //ExitPromt(font);      
 } 
 
-// Window
-// WIDTH "started size" output
-// HEIGHT "started size" output
-// SCREEN_WIDTH "current size" output
-// SCREEN_HEIGHT "current size" output
-// TITLE "window title" input/output
-// SINK_TITLE "audio interface title" input/output
- 
 int main(int arglenght, char** args)
 { 
     // Built-in "!default"
@@ -226,7 +144,7 @@ int main(int arglenght, char** args)
       // visible = false;
       // fpslimit = 60;
       // fps = output; 
-      // frametime = output; 
+      // deltatime = output; 
       // mouse = {x,y} output; 
       // mousescroll = {x,y} output;
       // mousemoving = Bool output; 
@@ -235,22 +153,22 @@ int main(int arglenght, char** args)
       // camera.z = float;
       // camera.angle = angle in degres;
       // debug.input = true;
-      // debug.wiredframe = true;
+      // debug.wireframe = true;
       // debug.fps = true;
     WindowInit(1920, 1080, "Grafenic");
-    shaderx = LoadShader("./res/shaders/pixel.vert","./res/shaders/custom.frag");
-    //shaderx = LoadShader("./res/shaders/pixel.vert",fragmentsh);//example to load raw "not convinient" not have hotreloading
+    custom = LoadShader("./res/shaders/pixel.vert","./res/shaders/custom.frag");
+    custom.hotreloading = true;//hotreloading for the shader or put this in the update "shader = ShaderHotReload(shader);" > "custom = ShaderHotReload(custom);"
+    //shaderdefault.hotreloading = true;// hot reload on the default shader
     font = LoadFont("./res/fonts/Monocraft.ttf");
     img = LoadImage("./res/images/Arch.png");
-    ClearColor((Color){75, 75, 75});
+    ClearColor((Color){75, 75, 75,100});
+
     // Saving how many times you boot
-        //FileLoadAll(); // Load all data from file "init"
-        //char File[FILE_LENGTH]; // file var
-        //FileLoad("boot", File); // load boot var in File
-        //int bootCount = textint(File); // Convert string to integer
-        //FileSave("boot", text("%d", bootCount++)); // Save updated boot count + 1 converted to str
-        //print("Booted times: %d\n", bootCount); // debug on console
-        ////FileClear(); // clear all data
+        //char* path = "./data.txt";
+        //char* boot = FileLoad(path);
+        //boot = FileSave(path, text("%d", (textint(boot) + 1)));
+        //printf("Booted times: %s\n", boot);
+        ////FileClear(path); // clear all data
     // Audio inizialization
         //AudioInit();
         // Play a stream with audio
@@ -264,16 +182,15 @@ int main(int arglenght, char** args)
         WindowClear();
             update();
         WindowProcess();
-        // After Drawing Screen Process
-            // GetPixel Pointed color "slow"
-                //pixelColor = GetPixel(mouse.x, mouse.y);
-            // Screenshot
-                //if(isKey("F11")){
-                //    SaveScreenshot("Screenshot.png", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-                //    isKeyReset("F11");
-                //}
+        // GetPixel Pointed color "slow"
+            //pixelColor = GetPixel(mouse.x, mouse.y);
+        // Screenshot
+            //if(isKey("F11")){
+            //    SaveScreenshot("Screenshot.png", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+            //    isKeyReset("F11");
+            //}
     }
     WindowClose();
-    DeleteShaderProgram(shaderx);
+    DeleteShader(custom);
     return 0;
 } 
