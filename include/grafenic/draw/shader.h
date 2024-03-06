@@ -44,9 +44,14 @@
                 printf("Failed to allocate memory for %s\n", filepath);
                 return NULL;
             }
-            fread(buffer, 1, length, file);
-            buffer[length] = '\0';
+            size_t bytesRead = fread(buffer, 1, length, file);
             fclose(file);
+            if (bytesRead != length) {
+                printf("Failed to read %s\n", filepath);
+                free(buffer);
+                return NULL;
+            }
+            buffer[length] = '\0';
             return buffer;
         }
 
@@ -66,6 +71,8 @@
                 glDeleteProgram(program);
                 return 0;
             }
+            glDetachShader(program, vertexShader);
+            glDetachShader(program, fragmentShader);
             glDeleteShader(vertexShader);
             glDeleteShader(fragmentShader);
             return program;
@@ -80,13 +87,21 @@
             if (FileExists(fragment)) {
                 fragmentsrc = LoadShaderText(fragment);
             }
-            return (Shader){LinkShaders(vertexsrc, fragmentsrc), vertex, fragment};
+            GLuint shaderProgram = LinkShaders(vertexsrc, fragmentsrc);
+            if (vertex != vertexsrc) {
+                free((void*)vertexsrc);
+            }
+            if (fragment != fragmentsrc) {
+                free((void*)fragmentsrc);
+            }
+            return (Shader){shaderProgram, vertex, fragment};
         }
 
         Shader ShaderHotReload(Shader shader){
             time_t currentVertexModTime = GetFileModTime(shader.vertex);
             time_t currentFragmentModTime = GetFileModTime(shader.fragment);
             if (currentVertexModTime != shader.lastvertmodtime || currentFragmentModTime != shader.lastfragmodtime) {
+                glDeleteProgram(shader.Program);
                 shader = LoadShader(shader.vertex,shader.fragment);
                 shader.lastvertmodtime = currentVertexModTime;
                 shader.lastfragmodtime = currentFragmentModTime;
