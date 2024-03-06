@@ -117,11 +117,11 @@ void update(void){
     // Experimental WorkInProgress
         //debug.wireframe = true; //debug single part
         // TriangleGL 
-            GLfloat x1 = SCREEN_WIDTH/2, y1 = 0;
-            GLfloat x2 = 0.0f, y2 = SCREEN_HEIGHT;
-            GLfloat x3 = SCREEN_WIDTH,  y3 = SCREEN_HEIGHT;
+            //GLfloat x1 = SCREEN_WIDTH/2, y1 = 0;
+            //GLfloat x2 = 0.0f, y2 = SCREEN_HEIGHT;
+            //GLfloat x3 = SCREEN_WIDTH,  y3 = SCREEN_HEIGHT;
             //Triangle(custom,0, x1, y1, x2, y2, x3, y3);
-            Zelda(custom,0, x1, y1, x2, y2, x3, y3);
+            //Zelda(custom,0, x1, y1, x2, y2, x3, y3);
         //debug.wireframe = false; //stop debugging
         //DrawTextAtlas(0, 0, font, Scaling(50), text("FPS: %.0f", fps), WHITE);
         //DrawTextRect(0,0,SCREEN_WIDTH, SCREEN_HEIGHT,font, Scaling(50), "text", WHITE,0);
@@ -159,8 +159,8 @@ int main(int arglenght, char** args)
     custom = LoadShader("./res/shaders/pixel.vert","./res/shaders/custom.frag");
     custom.hotreloading = true;//hotreloading for the shader or put this in the update "shader = ShaderHotReload(shader);" > "custom = ShaderHotReload(custom);"
     //shaderdefault.hotreloading = true;// hot reload on the default shader
-    font = LoadFont("./res/fonts/Monocraft.ttf");
-    img = LoadImage("./res/images/Arch.png");
+    //font = LoadFont("./res/fonts/Monocraft.ttf");
+    //img = LoadImage("./res/images/Arch.png");
     ClearColor((Color){75, 75, 75,100});
 
     // Saving how many times you boot
