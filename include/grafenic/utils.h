@@ -46,6 +46,10 @@
             return atoi(str);
         }
 
+        float textfloat(char *str) {
+            return atof(str);
+        }
+
         unsigned int textlength(const char *text) {
             return strlen(text);
         }
