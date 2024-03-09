@@ -41,7 +41,6 @@
             return buffer;
         }
 
-
         int textint(char *str) {
             return atoi(str);
         }
