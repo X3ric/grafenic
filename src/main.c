@@ -46,7 +46,7 @@ void update(void){
         //}
     // DrawImage
         //DrawImageShader(img,0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,0,custom);
-        //DrawImage(img,0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,0);
+        DrawImage(img,0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,0);
     // Input Example
         //      Key                    MouseButton                      Info
         // isKey,isKeyReset  // isMouseButton,isMouseButtonReset  // key Bool
@@ -126,10 +126,10 @@ void update(void){
         //DrawTextAtlas(0, 0, font, Scaling(50), text("FPS: %.0f", fps), WHITE);
         //DrawTextRect(0,0,SCREEN_WIDTH, SCREEN_HEIGHT,font, Scaling(50), "text", WHITE,0);
     // Modular Utils Funcitons
-        //if(!isKey("Space")){DrawBar(font);}
-        //TextInfo();
-        //Fps(0, SCREEN_HEIGHT, font, Scaling(50));
-        //ExitPromt(font);      
+        if(!isKey("Space")){DrawBar(font);}
+        TextInfo();
+        Fps(0, SCREEN_HEIGHT, font, Scaling(50));
+        ExitPromt(font);      
 } 
 
 int main(int arglenght, char** args)
@@ -157,10 +157,10 @@ int main(int arglenght, char** args)
       // debug.fps = true;
     WindowInit(1920, 1080, "Grafenic");
     custom = LoadShader("./res/shaders/pixel.vert","./res/shaders/custom.frag");
-    custom.hotreloading = true;//hotreloading for the shader or put this in the update "shader = ShaderHotReload(shader);" > "custom = ShaderHotReload(custom);"
+    //custom.hotreloading = true;//hotreloading for the shader or put this in the update "shader = ShaderHotReload(shader);" > in this case > "custom = ShaderHotReload(custom);"
     //shaderdefault.hotreloading = true;// hot reload on the default shader
-    //font = LoadFont("./res/fonts/Monocraft.ttf");
-    //img = LoadImage("./res/images/Arch.png");
+    font = LoadFont("./res/fonts/Monocraft.ttf");
+    img = LoadImage("./res/images/Arch.png");
     ClearColor((Color){75, 75, 75,100});
 
     // Saving how many times you boot

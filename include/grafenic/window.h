@@ -191,10 +191,10 @@
         }
         glfwSetInputMode(window.w, GLFW_STICKY_KEYS, GLFW_TRUE);
         glEnable(GL_DEPTH_TEST);
-        //glDepthFunc(GL_LEQUAL);
-        //glDisable(GL_CULL_FACE);
-        //glCullFace(GL_BACK);
-        //glEnable(GL_MULTISAMPLE);
+        glDepthFunc(GL_LEQUAL);
+        glDisable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glEnable(GL_MULTISAMPLE);
         InitializeOpenGL();
         print("Loaded\n");
         return 0;

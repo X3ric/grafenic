@@ -1,5 +1,5 @@
-CC = gcc #-O2 #-g #-Wall #-Wextra 
-CFLAGS = -I./include
+CC = gcc #-O2 #-g #-Wall #-Wextra
+CFLAGS = -I./include -I./src
 LDFLAGS = -lglfw -lGL -lpthread -lGLEW -lm -ldl
 TARGET = ./grafenic
 SOURCES = ./src/main.c
