@@ -1,5 +1,13 @@
 <div align="center">
 
+### Compile & run
+
+<pre>
+git clone https://github.com/x3ric/grafenic
+cd grafenic
+./build run
+</pre>
+
 <details>
 <summary><h3>Variables</h3></summary>
 

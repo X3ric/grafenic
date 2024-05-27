@@ -15,50 +15,49 @@ Color pixelColor;
 void update(void){
     // Movement Camera
         double speed;
+        double clampz;
+        clampz = (deltatime);
+        //print(text("Cam lerp: %.5f\n", clampz));
         if (isKeyDown("LeftShift")) {
             speed = 0.15f;
         } else {
             speed = 0.05f;
         }
         if (isKeyDown("w")) {
-            camera.y += (speed / 10) * deltatime;
+            camera.y += (speed / 10) * clampz;
         }
         if (isKeyDown("s")) {
-            camera.y -= (speed / 10) * deltatime;
+            camera.y -= (speed / 10) * clampz;
         }
         if (isKeyDown("a")) {
-            camera.x += (speed / 10) * deltatime;
+            camera.x += (speed / 10) * clampz;
         }
         if (isKeyDown("d")) {
-            camera.x -= (speed / 10) * deltatime;
+            camera.x -= (speed / 10) * clampz;
         }
         if (isKeyDown("r")) {
             speed = 0.0f;
-            camera.x = 0.0f;
-            camera.y = 0.0f;
-            camera.z = 1.0f;
-            camera.angle = (GLfloat)0.0f;
+            camera.x = Lerp(camera.x, 0.0f, 0.0003f * clampz);
+            camera.y = Lerp(camera.y, 0.0f, 0.0003f * clampz);
+            camera.z = Lerp(camera.z, 1.0f, 0.0003f * clampz);
+            camera.angle = Lerp(camera.angle, (GLfloat)0.0f, 0.0003f * clampz);
             mousescroll.y = 0.0f;
         } else {
             if (camera.z <= 0) {
-                camera.z = Lerp(1.0, mousescroll.y * 0.1f, 0.0003f * deltatime);
+                camera.z = Lerp(1.0, mousescroll.y * 0.1f, 0.0003f * clampz);
             } else {
-                camera.z = Lerp(camera.z, mousescroll.y * 0.1f + 1.0f , 0.0003f * deltatime);
+                camera.z = Lerp(camera.z, mousescroll.y * 0.1f + 1.0f , 0.0003f * clampz);
             }
-            //if(){ // TODO cam zoom on mousepos
-            //    camera.x = Lerp(camera.x, mouse.x, 0.0001f * deltatime);
-            //    camera.y = Lerp(camera.y, mouse.y, 0.0001f * deltatime);
-            //}
         }
         if (mousescroll.y <= 0) {mousescroll.y = 0;}
         if (isKeyDown("e")) {
-           camera.angle += (speed / 1000) * deltatime;
+           camera.angle += (speed / 1000) * clampz;
         } else if (isKeyDown("q")) {
-           camera.angle -= (speed / 1000) * deltatime;
+           camera.angle -= (speed / 1000) * clampz;
         }
     // DrawImage
-        DrawImageShader(img,0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,0,custom);
-        //DrawImage(img,0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,0);
+        //DrawImageShader(img,0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,0,custom);
+        DrawImage(img,0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,0);
     // Input Example
         //      Key                    MouseButton                      Info
         // isKey,isKeyReset  // isMouseButton,isMouseButtonReset  // key Bool
@@ -67,40 +66,44 @@ void update(void){
         //if (isKeyPressed("A", 0.06f)) { // Repeat key every 0.06 seconds
         //    DrawCircle(mouse.x,mouse.y, Scaling(35), (Color){0, 0, 0, 75});
         //}
-        if(isKey("M")){ // Change Cursor state
-            cursor = false;
-        } else {
-            cursor = true;
-        }
-        if(isKey("V")){ // Change Vsync state
-            vsync = true;
-        } else {
-            vsync = false;
-        }
+        //if(isKey("M")){ // Change Cursor state
+        //    cursor = false;
+        //} else {
+        //    cursor = true;
+        //}
+        //if(isKey("V")){ // Change Vsync state
+        //    vsync = true;
+        //} else {
+        //    vsync = false;
+        //}
         // cursor
-            if (!isMouseButton(0)) { 
-                // gradually reset ball to center pos when not visible
-                    const int speed = 3;
-                    float lerpOutSpeed = (0.0001*speed) * deltatime;
-                    mousecursorx = Lerp(mousecursorx, SCREEN_WIDTH / 2,  lerpOutSpeed);
-                    mousecursory = Lerp(mousecursory, SCREEN_HEIGHT / 2, lerpOutSpeed);
-                    timer = 0;
-            } else {
-                float lerpInSpeed = 0.05;
-                mousecursorx = Lerp(mousecursorx, mouse.x, lerpInSpeed);
-                mousecursory = Lerp(mousecursory, mouse.y, lerpInSpeed);
-                const float speed = 0.75;
-                timer += deltatime/(speed*1000);
-                float circleSize = Lerp(0, (float)Scaling(25), timer);
-                //if (IsInside(mouse.x,mouse.y,0, 0, SCREEN_WIDTH, SCREEN_HEIGHT / 12)  && !isKey("Space")) { // Simple 2d collision middle circle
-                if(IsInside(mousecursorx,mousecursory,0, 0, SCREEN_WIDTH, SCREEN_HEIGHT / 12) && !isKey("Space")) { // Simple 2d collision border circle
-                    DrawCircle(mousecursorx, mousecursory, circleSize, PURPLE);
-                    DrawCircleBorder(mousecursorx, mousecursory, circleSize, 4, VIOLET);
-                } else {
-                    DrawCircle(mousecursorx, mousecursory, circleSize, VIOLET);
-                    DrawCircleBorder(mousecursorx, mousecursory, circleSize, 4, PURPLE);
-                }
-            }
+            //float lerpSpeed = 0.0003f * clampz;
+            //const float speedcursor = 0.75f;
+            //static float timer = 0.0f;
+            //float circleSize = Lerp(0.0f, (float)Scaling(10), timer);
+            //float circleborderSize = Lerp(0.0f, (float)Scaling(3), timer);
+            //if (!isMouseButton(0)) {
+            //    if (mousecursorx <= 0){
+            //        mousecursorx = mouse.x;
+            //    } 
+            //    if(mousecursory <= 0) {
+            //        mousecursory = mouse.y;
+            //    }
+            //    mousecursorx = Lerp(mousecursorx, mouse.x, lerpSpeed);
+            //    mousecursory = Lerp(mousecursory, mouse.y, lerpSpeed);
+            //    timer = Lerp(timer, 0.0f, lerpSpeed);
+            //} else {
+            //    mousecursorx = Lerp(mousecursorx, mouse.x, lerpSpeed);
+            //    mousecursory = Lerp(mousecursory, mouse.y, lerpSpeed);
+            //    timer += deltatime / (speedcursor * 1000.0f);
+            //}
+            //if (IsInside(mousecursorx, mousecursory, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT / 12) && isKey("Space")) {
+            //    DrawCircle(mousecursorx, mousecursory, circleSize, PURPLE);
+            //    DrawCircleBorder(mousecursorx, mousecursory, circleSize, circleborderSize, VIOLET);
+            //} else {
+            //    DrawCircle(mousecursorx, mousecursory, circleSize, VIOLET);
+            //    DrawCircleBorder(mousecursorx, mousecursory, circleSize, circleborderSize, PURPLE);
+            //}
     // Easing Lerp
         //int sizeball  = Lerp(0, 50,  Easing(Motion(1.0,0.5), "Linear"));
         //int positionx = Lerp(0, SCREEN_WIDTH,  Easing(Motion(1.0,1.0), "CubicInOut"));
@@ -120,7 +123,7 @@ void update(void){
         //        size -= 1;
         //    }
         //DrawTriangle(x - size, y, x + size, y, x, y + size, PURPLE);
-    // Drawing Pixel Pointed Color 
+    // Getting Pixel Pointed Color 
         // Uncomment "GetPixel Pointed color" in main
         //int fontsize = Scaling(50);
         //const char* textContent = text("R:%d G:%d B:%d A:%d", pixelColor.r, pixelColor.g, pixelColor.b, pixelColor.a);
@@ -136,7 +139,7 @@ void update(void){
             //Zelda(x1,y1,x2,y2,x3,y3,0,custom);
         //debug.wireframe = false; //stop debugging
     // Modular Utils Funcitons
-        if(!isKey("Space")){DrawBar(font);}
+        if(isKey("Space")){DrawBar(font);}
         //TextInfo();
         Fps(0, 0, font, Scaling(50));
         ExitPromt(font);  
@@ -158,6 +161,7 @@ int main(int arglenght, char** args)
       // mouse = {x,y} output; 
       // mousescroll = {x,y} output;
       // mousemoving = Bool output; 
+      // mousescrolling = Bool output; 
       // camera.x = float;
       // camera.y = float;
       // camera.z = float;

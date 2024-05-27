@@ -1,22 +1,22 @@
 #version 330 core
 
-uniform vec2 iResolution;
-uniform sampler2D screenTexture;
-uniform sampler2D textTexture;  // SDF texture for text
-uniform vec4 textColor;         // RGBA color for the text
-
+uniform sampler2D textTexture;
 in vec2 texCoord;
 out vec4 fragColor;
 
-void mainImage(in vec2 texCoord, in vec2 fragCoord, out vec4 fragColor) {
-    vec4 originalColor = texture(screenTexture, texCoord);
-    vec4 sdfSample = texture(textTexture, texCoord);
-    float edgeSmooth = 0.5 / iResolution.x;
-    float alpha = smoothstep(0.5 - edgeSmooth, 0.5 + edgeSmooth, sdfSample.r);
-    vec4 blendedColor = mix(originalColor, textColor, alpha * textColor.a);
-    fragColor = blendedColor;
+vec4 renderSDF(vec2 texCoord) {
+    float sdfValue = texture(textTexture, texCoord).r;
+    float distance = sdfValue * 2.0 - 1.0; // Convert from [0, 1] to [-1, 1]
+    float smoothFactor = 0.25;             // Width of the transition edge
+    float alpha = smoothstep(-smoothFactor, smoothFactor, distance);
+    return vec4(texture(textTexture, texCoord).rgb, alpha);
+}
+
+vec4 renderNonSDF(vec2 texCoord) {
+    vec4 color = texture(textTexture, texCoord);
+    return vec4(color.rgb, color.a);
 }
 
 void main() {
-    mainImage(texCoord, gl_FragCoord.xy, fragColor);
+    fragColor = renderNonSDF(texCoord);
 }

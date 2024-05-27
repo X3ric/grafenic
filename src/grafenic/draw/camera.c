@@ -1,13 +1,12 @@
 typedef struct {
-    float x;
-    float y;
-    float z;
-    GLfloat angle;
+    float x,y,z;
+    float angle;
+    float fov;
 } Camera;
 
-Camera camera = {0.0f, 0.0f , 0.0f, (GLfloat)0.0f};
+Camera camera = {0.0f, 0.0f , 0.0f, 0.0f, 0.0f};
 
-void RenderShaderOrtho(Shader shader, GLfloat vertices[], GLfloat vertSize, GLuint indices[], GLfloat indexSize, int count) {
+void RenderShader(Shader shader, GLfloat vertices[], GLfloat vertSize, GLuint indices[], GLfloat indexSize, int count) {
     if(shader.hotreloading){ // regenerate shader on file change
         shader = ShaderHotReload(shader);
     }
@@ -17,10 +16,9 @@ void RenderShaderOrtho(Shader shader, GLfloat vertices[], GLfloat vertSize, GLui
     GLdouble top = 0;
     GLdouble zNear = -1;
     GLdouble zFar = 1;
-    GLfloat middle_x = SCREEN_WIDTH / 2;
-    GLfloat middle_y = SCREEN_HEIGHT / 2;
     GLfloat pivot_x = camera.x;
     GLfloat pivot_y = camera.y;
+    if(camera.z == 0.0f) camera.z = 1.0f;
     GLfloat zoom = camera.z;
     GLfloat orthoMatrix[16] = {
         2.0f * zoom / SCREEN_WIDTH, 0.0f, 0.0f, 0.0f,
@@ -103,7 +101,7 @@ void Triangle(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, GLfloat x3, GLfloa
     };
     GLuint verts = sizeof(vertices);
     GLuint indexs = sizeof(indices);
-    RenderShaderOrtho(shader,vertices ,verts ,indices ,indexs , 3);
+    RenderShader(shader,vertices ,verts ,indices ,indexs , 3);
 }
 
 void Rect(float x, float y, float width, float height, GLfloat angle,Shader shader) {
@@ -142,7 +140,7 @@ void Rect(float x, float y, float width, float height, GLfloat angle,Shader shad
     };                                                                                        
     GLuint verts = sizeof(vertices);
     GLuint indexs = sizeof(indices);
-    RenderShaderOrtho(shader,vertices ,verts , indices, indexs, 6);
+    RenderShader(shader,vertices ,verts , indices, indexs, 6);
 }
 
 void Line(float x0, float y0, float x1, float y1, int thickness, Shader shader) {
@@ -184,7 +182,7 @@ void Line(float x0, float y0, float x1, float y1, int thickness, Shader shader) 
         0, 2, 3
     };
     // Render the line as a rectangle
-    RenderShaderOrtho(shader, vertices, sizeof(vertices), indices, sizeof(indices), 6);
+    RenderShader(shader, vertices, sizeof(vertices), indices, sizeof(indices), 6);
 }
 
 void Zelda(Shader shader, GLfloat angle, GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, GLfloat x3, GLfloat y3) {
@@ -246,7 +244,7 @@ void Zelda(Shader shader, GLfloat angle, GLfloat x1, GLfloat y1, GLfloat x2, GLf
     };                         
     GLuint verts = sizeof(vertices);
     GLuint indexs = sizeof(indices);
-    RenderShaderOrtho(shader,vertices ,verts ,indices ,indexs, 9);
+    RenderShader(shader,vertices ,verts ,indices ,indexs, 9);
 }
 
 void Framebuffer(float x, float y, float width, float height) {

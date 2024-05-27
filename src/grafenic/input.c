@@ -306,6 +306,8 @@ int KeyChar(const char* character) {
     Mouse lastmouse = {0, 0};
     Mouse mouse = {0, 0};
     bool mousemoving = false;
+    bool mousescrolling = false;
+
 
     Mouse MouseInit() {
         glfwGetCursorPos(window.w, &mouse.x, &mouse.y);
@@ -353,6 +355,11 @@ int KeyChar(const char* character) {
     void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
         mousescroll.x += xoffset;
         mousescroll.y += yoffset;
+        if (yoffset <= 0 || xoffset <= 0) {
+            mousescrolling = false;
+        } else {
+            mousescrolling = true;
+        }
     }
 
     void SetCursorPos(float x, float y) {

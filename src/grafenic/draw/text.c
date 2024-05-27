@@ -26,15 +26,15 @@ Font GenAtlas(Font font) {
     if (font.fontSize <= 1) font.fontSize = 24.0;
     if (!font.fontBuffer) return font;
     if (!font.nearest) font.nearest = false;
-    font.atlasWidth = 1024;
-    font.atlasHeight = 1024;
+    font.atlasWidth = 512;
+    font.atlasHeight = 512;
     font.atlasData = (unsigned char*)calloc(font.atlasWidth * font.atlasHeight, sizeof(unsigned char));
     if (!font.atlasData) {
         free(font.fontBuffer);
         return font;
     }
     stbtt_pack_context packContext;
-    if (!stbtt_PackBegin(&packContext, font.atlasData, font.atlasWidth, font.atlasHeight, 0, 1, NULL)) {
+    if (!stbtt_PackBegin(&packContext, font.atlasData, font.atlasWidth, font.atlasHeight, 0, 5, NULL)) {
         free(font.atlasData);
         free(font.fontBuffer);
         return font;
@@ -169,6 +169,7 @@ void DrawText(int x, int y, Font font, float fontSize, const char* text, Color c
     }
     int offsetX = 0;
     int offsetY = 0;
+    int offset = 0;
     for (size_t i = 0; text[i] != '\0'; ++i) {
         if (text[i] == '\n') {
             offsetY += baseTextHeight;
@@ -182,10 +183,11 @@ void DrawText(int x, int y, Font font, float fontSize, const char* text, Color c
         int xoffset = (int)font.glyphs[glyphIndex].xoff;
         int yoffset = (int)font.glyphs[glyphIndex].yoff;
         unsigned char* char_bitmap = stbtt_GetCodepointBitmap(&font.fontInfo, 0, scale, text[i], &charWidth, &charHeight, &xoffset, &yoffset);
+        if (i == 0) {offset = 1+(charHeight/2) ;}
         for (int j = 0; j < charHeight; ++j) {
             for (int k = 0; k < charWidth; ++k) {
                 int bitmap_x = offsetX + k + xoffset;
-                int bitmap_y = 9 + offsetY - j - yoffset;
+                int bitmap_y = offset + offsetY - j - yoffset;
                 if (bitmap_x < 0 || bitmap_x >= baseTextWidth || bitmap_y < 0 || bitmap_y >= baseTextHeight) continue;
                 int pixel = (bitmap_y * baseTextWidth + bitmap_x) * 4;
                 unsigned char alpha = char_bitmap[j * charWidth + k];

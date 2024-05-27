@@ -42,7 +42,7 @@ void Fps(int x , int y, Font font, int size) { // FPS info
 } 
 void ExitPromt(Font font) { // Escape PopUp
     if (isKey("Esc")) {
-        DrawPopUp("Quit?Yes/No",font,Scaling(17),SCREEN_WIDTH/18, SCREEN_HEIGHT/35);
+        DrawPopUp("Quit? y/n",font,Scaling(17),SCREEN_WIDTH/18, SCREEN_HEIGHT/35);
         if (isKeyDown("Y")) {
             WindowStateSet(true);
         }

@@ -6,7 +6,7 @@ void DrawPixel(int x, int y, Color color) {
     if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) {
         return;
     }
-    if (color.a == 0) { color.a = 255; }
+    if (color.a == 0) color.a = 255;
     int index = (y * SCREEN_WIDTH + x) * 4;
     float alpha = color.a / 255.0f;
     float invAlpha = 1.0f - alpha;
@@ -35,9 +35,7 @@ bool IsInside(int x, int y,int rectX, int rectY, int rectWidth, int rectHeight) 
 }
 
 void DrawRect(int x, int y, int width, int height, Color color) {
-    if (color.a == 0) { 
-        color.a = 255; 
-    }
+    if (color.a == 0) color.a = 255;
     static GLuint textureID;
     glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glGenTextures(1, &textureID);
@@ -53,7 +51,7 @@ void DrawRect(int x, int y, int width, int height, Color color) {
 }
 
 void DrawRectPixel(int x, int y, int width, int height, Color color) {
-    if (color.a == 0) { color.a = 255; }
+    if (color.a == 0) color.a = 255;
     for (int i = x; i < x + width; i++) {
         for (int j = y; j < y + height; j++) {
             DrawPixel(i, j, (Color){color.r, color.g, color.b, color.a});
@@ -62,9 +60,7 @@ void DrawRectPixel(int x, int y, int width, int height, Color color) {
 }
 
 void DrawRectBorder(int x, int y, int width, int height, int thickness, Color color) {
-    if (color.a == 0) { 
-        color.a = 255; 
-    }
+    if (color.a == 0) color.a = 255;
     DrawRect(x, y, width, thickness, color);
     DrawRect(x, y + height - thickness, width, thickness, color);
     DrawRect(x, y, thickness, height, color);
@@ -88,9 +84,7 @@ void DrawRectBorderPixel(int x, int y, int width, int height, int thickness, Col
 }
 
 void DrawLine(float x0, float y0, float x1, float y1, int thickness, Color color) {
-    if (color.a == 0) {
-        color.a = 255;
-    }
+    if (color.a == 0) color.a = 255;
     static GLuint textureID;
     glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glGenTextures(1, &textureID);
@@ -131,9 +125,7 @@ void DrawLinePixel(int x0, int y0, int x1, int y1, int thickness, Color color) {
 }
 
 void DrawCircle(int x, int y, int r, Color color) {
-    if (color.a == 0) {
-        color.a = 255;
-    }
+    if (color.a == 0) color.a = 255;
     GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
@@ -171,7 +163,7 @@ void DrawCircle(int x, int y, int r, Color color) {
 }
 
 void DrawCirclePixel(int x, int y, int r, Color color) {
-    if (color.a == 0) { color.a = 255; }
+    if (color.a == 0) color.a = 255;
     int h = x;
     int k = SCREEN_HEIGHT - y;
     for (int i = h - r; i <= h + r; i++) {
@@ -184,9 +176,7 @@ void DrawCirclePixel(int x, int y, int r, Color color) {
 }
 
 void DrawCircleBorder(int x, int y, int r, int thickness, Color color) {
-    if (color.a == 0) {
-        color.a = 255;
-    }
+    if (color.a == 0) color.a = 255;
     static GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
@@ -225,7 +215,7 @@ void DrawCircleBorder(int x, int y, int r, int thickness, Color color) {
 }
 
 void DrawCircleBorderPixel(int x, int y, int r, int thickness, Color color) {
-    if (color.a == 0) { color.a = 255; }
+    if (color.a == 0) color.a = 255;
     int h = x;
     int k = SCREEN_HEIGHT - y;
     for (int i = h - r - thickness; i <= h + r + thickness; i++) {
@@ -239,9 +229,7 @@ void DrawCircleBorderPixel(int x, int y, int r, int thickness, Color color) {
 }
 
 void DrawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, Color color) {
-    if (color.a == 0) { 
-        color.a = 255; 
-    }
+    if (color.a == 0) color.a = 255;
     static GLuint textureID;
     glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glGenTextures(1, &textureID);
@@ -257,7 +245,7 @@ void DrawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, Color color) {
 }
 
 void DrawTrianglePixel(int x1, int y1, int x2, int y2, int x3, int y3, Color color) {
-    if (color.a == 0) { color.a = 255; }
+    if (color.a == 0) color.a = 255;
     int minX = (x1 < x2) ? (x1 < x3 ? x1 : x3) : (x2 < x3 ? x2 : x3);
     int minY = (y1 < y2) ? (y1 < y3 ? y1 : y3) : (y2 < y3 ? y2 : y3);
     int maxX = (x1 > x2) ? (x1 > x3 ? x1 : x3) : (x2 > x3 ? x2 : x3);
