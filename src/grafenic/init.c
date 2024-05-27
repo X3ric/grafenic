@@ -27,10 +27,10 @@ int HEIGHT;
 
 GLubyte* framebuffer;
 
-#include "grafenic/input.c"
-#include "grafenic/utils.c"
-#include "grafenic/audio.c"
-#include "grafenic/draw/init.c"
+#include "input.c"
+#include "utils.c"
+#include "audio.c"
+#include "draw/init.c"
 
 double deltatime;
 int fpslimit;
@@ -108,7 +108,7 @@ void WindowProcess() {
         }
         oldvisible = visible;
     }
-    if(framebuffer){DrawPixels(0,0,SCREEN_WIDTH,SCREEN_HEIGHT);}
+    if(framebuffer){Framebuffer(0,0,SCREEN_WIDTH,SCREEN_HEIGHT);}
     glfwSwapBuffers(window.w);
     glfwPollEvents();
 }

@@ -2,15 +2,6 @@
 #include "shader.c"
 #include "camera.c"
 
-void DrawPixels(float x, float y, float width, float height) { 
-    glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);//alpha blending
-    glBindTexture(GL_TEXTURE_2D, framebufferTexture);
-    CreateTextureWithPBO(framebuffer,framebufferTexture);
-    Quad(x, y, width, height,0,pixelshaderdefault);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glDisable(GL_BLEND);
-}
-
 void DrawPixel(int x, int y, Color color) {
     if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) {
         return;
@@ -44,6 +35,24 @@ bool IsInside(int x, int y,int rectX, int rectY, int rectWidth, int rectHeight) 
 }
 
 void DrawRect(int x, int y, int width, int height, Color color) {
+    if (color.a == 0) { 
+        color.a = 255; 
+    }
+    static GLuint textureID;
+    glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    unsigned char pixels[] = { color.r, color.g, color.b, color.a };
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    Rect(x, SCREEN_HEIGHT - y - height, width, height, 0.0f, pixelshaderdefault);
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDeleteTextures(1, &textureID);
+}
+
+void DrawRectPixel(int x, int y, int width, int height, Color color) {
     if (color.a == 0) { color.a = 255; }
     for (int i = x; i < x + width; i++) {
         for (int j = y; j < y + height; j++) {
@@ -53,6 +62,16 @@ void DrawRect(int x, int y, int width, int height, Color color) {
 }
 
 void DrawRectBorder(int x, int y, int width, int height, int thickness, Color color) {
+    if (color.a == 0) { 
+        color.a = 255; 
+    }
+    DrawRect(x, y, width, thickness, color);
+    DrawRect(x, y + height - thickness, width, thickness, color);
+    DrawRect(x, y, thickness, height, color);
+    DrawRect(x + width - thickness, y, thickness, height, color);
+}
+
+void DrawRectBorderPixel(int x, int y, int width, int height, int thickness, Color color) {
     if (color.a == 0) color.a = 255;
     for (int i = x; i < x + width; i++) {
         for (int t = 0; t < thickness; t++) {
@@ -68,7 +87,24 @@ void DrawRectBorder(int x, int y, int width, int height, int thickness, Color co
     }
 }
 
-void DrawLine(int x0, int y0, int x1, int y1, int thickness, Color color) {
+void DrawLine(float x0, float y0, float x1, float y1, int thickness, Color color) {
+    if (color.a == 0) {
+        color.a = 255;
+    }
+    static GLuint textureID;
+    glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    unsigned char pixels[] = { color.r, color.g, color.b, color.a };
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    Line(x0, y0, x1, y1, thickness, pixelshaderdefault);
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDeleteTextures(1, &textureID);
+}
+
+void DrawLinePixel(int x0, int y0, int x1, int y1, int thickness, Color color) {
     if (color.a == 0) color.a = 255;
     int dx = abs(x1 - x0);
     int dy = abs(y1 - y0);
@@ -95,6 +131,46 @@ void DrawLine(int x0, int y0, int x1, int y1, int thickness, Color color) {
 }
 
 void DrawCircle(int x, int y, int r, Color color) {
+    if (color.a == 0) {
+        color.a = 255;
+    }
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    unsigned char pixels[r * 2][r * 2][4];
+    for (int i = 0; i < r * 2; i++) {
+        for (int j = 0; j < r * 2; j++) {
+            float dx = i - r;
+            float dy = j - r;
+            float distance = sqrt(dx * dx + dy * dy);
+            if (distance < r) {
+                pixels[i][j][0] = color.r;
+                pixels[i][j][1] = color.g;
+                pixels[i][j][2] = color.b;
+                pixels[i][j][3] = color.a;
+            } else {
+                pixels[i][j][0] = 0;
+                pixels[i][j][1] = 0;
+                pixels[i][j][2] = 0;
+                pixels[i][j][3] = 0;
+            }
+        }
+    }
+    glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, r * 2, r * 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    Rect(x - r, y - r, r * 2, r * 2, 0.0f, pixelshaderdefault);
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+    glDeleteTextures(1, &textureID);
+}
+
+void DrawCirclePixel(int x, int y, int r, Color color) {
     if (color.a == 0) { color.a = 255; }
     int h = x;
     int k = SCREEN_HEIGHT - y;
@@ -108,6 +184,47 @@ void DrawCircle(int x, int y, int r, Color color) {
 }
 
 void DrawCircleBorder(int x, int y, int r, int thickness, Color color) {
+    if (color.a == 0) {
+        color.a = 255;
+    }
+    static GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    int diameter = r * 2 + thickness * 2;
+    unsigned char pixels[diameter][diameter][4];
+    for (int i = 0; i < diameter; i++) {
+        for (int j = 0; j < diameter; j++) {
+            float dx = i - r - thickness;
+            float dy = j - r - thickness;
+            float distance = sqrt(dx * dx + dy * dy);
+            if (distance < r + thickness && distance >= r) {
+                pixels[i][j][0] = color.r;
+                pixels[i][j][1] = color.g;
+                pixels[i][j][2] = color.b;
+                pixels[i][j][3] = color.a;
+            } else {
+                pixels[i][j][0] = 0;
+                pixels[i][j][1] = 0;
+                pixels[i][j][2] = 0;
+                pixels[i][j][3] = 0;
+            }
+        }
+    }
+    glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, diameter, diameter, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    Rect(x - r - thickness, y - r - thickness, diameter, diameter, 0.0f, pixelshaderdefault);
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+    glDeleteTextures(1, &textureID);
+}
+
+void DrawCircleBorderPixel(int x, int y, int r, int thickness, Color color) {
     if (color.a == 0) { color.a = 255; }
     int h = x;
     int k = SCREEN_HEIGHT - y;
@@ -122,6 +239,24 @@ void DrawCircleBorder(int x, int y, int r, int thickness, Color color) {
 }
 
 void DrawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, Color color) {
+    if (color.a == 0) { 
+        color.a = 255; 
+    }
+    static GLuint textureID;
+    glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    unsigned char pixels[] = { color.r, color.g, color.b, color.a };
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    Triangle(x1,y1,x2,y2,x3,y3,0.0f,pixelshaderdefault);
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDeleteTextures(1, &textureID);
+}
+
+void DrawTrianglePixel(int x1, int y1, int x2, int y2, int x3, int y3, Color color) {
     if (color.a == 0) { color.a = 255; }
     int minX = (x1 < x2) ? (x1 < x3 ? x1 : x3) : (x2 < x3 ? x2 : x3);
     int minY = (y1 < y2) ? (y1 < y3 ? y1 : y3) : (y2 < y3 ? y2 : y3);
@@ -144,6 +279,12 @@ void DrawTriangleBorder(int x1, int y1, int x2, int y2, int x3, int y3, int thic
     DrawLine(x1, y1, x2, y2, thickness, color);
     DrawLine(x3, y3, x1, y1, thickness, color);
     DrawLine(x2, y2, x3, y3, thickness, color);
+}
+
+void DrawTriangleBorderPixel(int x1, int y1, int x2, int y2, int x3, int y3, int thickness, Color color) {
+    DrawLinePixel(x1, y1, x2, y2, thickness, color);
+    DrawLinePixel(x3, y3, x1, y1, thickness, color);
+    DrawLinePixel(x2, y2, x3, y3, thickness, color);
 }
 
 #include "image.c"

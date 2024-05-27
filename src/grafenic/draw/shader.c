@@ -11,7 +11,6 @@ Shader fontshaderdefault; // Shader program default for fonts
 Shader pixelshaderdefault; // Shader program default for pixels
 
 GLuint framebufferTexture;
-GLuint textTexture;
 GLuint VAO;           // Vertex Array Object
 GLuint VBO;           // Vertex Buffer Object
 GLuint EBO;           // Index Buffer Object
@@ -173,12 +172,6 @@ void InitializeOpenGL() {
         pixelshaderdefault = LoadShader("./res/shaders/default.vert","./res/shaders/pixel.frag");
         fontshaderdefault = LoadShader("./res/shaders/default.vert","./res/shaders/font.frag");
         GenArrays();
-    // Generate Texture for the TextRect 
-        glGenTextures(1,&textTexture);
-        glBindTexture(GL_TEXTURE_2D, textTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-        glTexOpt(GL_NEAREST,GL_CLAMP_TO_EDGE);
-        glBindTexture(GL_TEXTURE_2D, 0);
     // Generate texture for frame buffer
         glGenTextures(1,&framebufferTexture);
         glBindTexture(GL_TEXTURE_2D, framebufferTexture);
